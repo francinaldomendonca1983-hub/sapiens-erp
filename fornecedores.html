@@ -7,268 +7,342 @@
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --navy: #0B1929; --navy2: #112236; --navy3: #1A3352;
-    --blue: #2E7BC4; --blue2: #3E8FD8; --blue-glow: rgba(46,123,196,0.25);
-    --text: #E8EDF2; --text2: #8AA5BE; --text3: #4D6B85;
-    --border: rgba(46,123,196,0.2); --border2: rgba(46,123,196,0.4);
-    --success: #2ECC8A; --danger: #E05555; --warning: #E0A830;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Inter', sans-serif; background: var(--navy); color: var(--text); min-height: 100vh; }
-  body::before {
-    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background-image: linear-gradient(rgba(46,123,196,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(46,123,196,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-
-  /* TOPBAR */
-  .topbar {
-    position: fixed; top: 0; left: 0; right: 0; height: 60px;
-    background: rgba(11,25,41,0.95); border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(12px); display: flex; align-items: center;
-    padding: 0 24px; z-index: 100; gap: 16px;
-  }
-  .topbar-logo { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 3px; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
-  .topbar-logo-mark { width: 30px; height: 30px; background: var(--blue); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
-  .topbar-logo-mark svg { width: 16px; height: 16px; }
-  .topbar-sep { width: 1px; height: 24px; background: var(--border); }
-  .topbar-modulo { font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
-  .topbar-modulo svg { width: 14px; height: 14px; stroke: var(--blue2); fill: none; }
-  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-  .obra-chip { background: var(--navy2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; font-size: 12px; color: var(--text2); }
-  .obra-chip span { color: var(--text); font-weight: 500; }
-  .btn-voltar { padding: 6px 14px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); font-size: 12px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
-  .btn-voltar:hover { border-color: var(--blue); color: var(--blue2); }
-
-  /* LAYOUT */
-  .page { padding: 80px 24px 40px; max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
-  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-  .page-title { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; color: var(--text); }
-  .page-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
-
-  /* BUSCA */
-  .search-bar { position: relative; margin-bottom: 20px; }
-  .search-bar input { width: 100%; background: var(--navy2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px 12px 42px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; }
-  .search-bar input:focus { border-color: var(--blue); }
-  .search-bar svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--text3); fill: none; }
-
-  /* TABELA */
-  .table-wrap { background: var(--navy2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-  .table-header h3 { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); }
-  .table-count { font-size: 12px; color: var(--text3); }
-  table { width: 100%; border-collapse: collapse; }
-  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.15); }
-  tbody td { padding: 13px 16px; font-size: 13px; color: var(--text); border-bottom: 1px solid rgba(46,123,196,0.07); }
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover td { background: rgba(46,123,196,0.04); }
-  .td-secondary { color: var(--text2) !important; font-size: 12px; }
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-  .badge-ativo { background: rgba(46,204,138,0.12); color: var(--success); border: 1px solid rgba(46,204,138,0.25); }
-  .badge-inativo { background: rgba(77,107,133,0.2); color: var(--text3); border: 1px solid var(--border); }
-  .btn-icon { background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text2); cursor: pointer; transition: all 0.2s; font-size: 12px; margin-right: 4px; }
-  .btn-icon:hover { border-color: var(--blue); color: var(--blue2); }
-  .btn-icon.danger:hover { border-color: var(--danger); color: #ff8080; }
-  .empty-state { text-align: center; padding: 48px; color: var(--text3); font-size: 14px; }
-
-  /* FORMULÁRIO */
-  .form-card { background: var(--navy2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-  .form-card h3 { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 1px; color: var(--text); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
-  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px; }
-  .form-group { display: flex; flex-direction: column; gap: 7px; }
-  .form-group label { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text2); }
-  .form-group input, .form-group select {
-    background: var(--navy); border: 1px solid var(--border); border-radius: 8px;
-    padding: 11px 14px; color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif;
-    outline: none; transition: border-color 0.2s; width: 100%;
-  }
-  .form-group input:focus, .form-group select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
-  .form-group input::placeholder { color: var(--text3); }
-  .form-group select option { background: var(--navy2); }
-  .form-group select:disabled { opacity: 0.5; }
-  .form-actions { display: flex; gap: 10px; margin-top: 4px; }
-  .btn-salvar { padding: 11px 24px; background: var(--blue); border: none; border-radius: 8px; color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
-  .btn-salvar:hover { background: var(--blue2); box-shadow: 0 0 16px var(--blue-glow); }
-  .btn-salvar:disabled { opacity: 0.6; cursor: not-allowed; }
-  .btn-cancelar { padding: 11px 20px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.2s; }
-  .btn-cancelar:hover { border-color: var(--text2); color: var(--text); }
-  .btn-novo { padding: 9px 18px; background: var(--blue); border: none; border-radius: 8px; color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-  .btn-novo:hover { background: var(--blue2); }
-
-  /* MODAL */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; }
-  .modal-overlay.aberto { display: flex; }
-  .modal { background: var(--navy2); border: 1px solid var(--border2); border-radius: 14px; padding: 28px; width: 640px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,0.5); animation: fadeUp 0.2s ease; }
-  .modal h3 { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  .audit-info { font-size: 11px; color: var(--text3); margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); line-height: 1.8; }
-
-  /* TOAST */
-  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 10px; }
-  .toast { background: var(--navy2); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: var(--text); box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 10px; min-width: 280px; }
-  .toast.sucesso { border-left: 3px solid var(--success); }
-  .toast.erro { border-left: 3px solid var(--danger); }
-
-  /* LOADING */
-  .loading { display: flex; align-items: center; justify-content: center; padding: 48px; }
-  .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.6s linear infinite; }
-
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .fade-in { animation: fadeIn 0.3s ease; }
+:root{--navy:#0B1929;--navy2:#112236;--navy3:#1A3352;--blue:#2E7BC4;--blue2:#3E8FD8;--blue-glow:rgba(46,123,196,0.25);--text:#E8EDF2;--text2:#8AA5BE;--text3:#4D6B85;--border:rgba(46,123,196,0.2);--border2:rgba(46,123,196,0.4);--success:#2ECC8A;--danger:#E05555;--warning:#E0A830;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(46,123,196,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(46,123,196,0.04) 1px,transparent 1px);background-size:40px 40px;}
+.topbar{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(11,25,41,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;padding:0 24px;z-index:100;gap:16px;}
+.topbar-logo{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);}
+.topbar-logo-mark{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.topbar-logo-mark svg{width:16px;height:16px;}
+.topbar-sep{width:1px;height:24px;background:var(--border);}
+.topbar-modulo{font-size:13px;color:var(--text2);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.obra-chip{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--text2);}
+.obra-chip span{color:var(--text);font-weight:500;}
+.btn-voltar{padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:flex;align-items:center;gap:6px;}
+.btn-voltar:hover{border-color:var(--blue);color:var(--blue2);}
+.page{padding:80px 24px 40px;max-width:1200px;margin:0 auto;position:relative;z-index:1;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;}
+.page-subtitle{font-size:12px;color:var(--text3);margin-top:2px;}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.search-bar{flex:1;min-width:220px;position:relative;}
+.search-bar input{width:100%;background:var(--navy2);border:1px solid var(--border);border-radius:10px;padding:10px 14px 10px 40px;color:var(--text);font-size:13px;outline:none;transition:border-color 0.2s;}
+.search-bar input:focus{border-color:var(--blue);}
+.search-bar svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text3);fill:none;}
+.btn-novo{padding:9px 18px;background:var(--blue);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+.btn-novo:hover{background:var(--blue2);}
+.btn-sm{padding:7px 14px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.2s;}
+.btn-sm:hover{border-color:var(--blue);color:var(--blue2);}
+.table-wrap{background:var(--navy2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.table-header h3{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text3);}
+.tcount{font-size:12px;color:var(--text3);}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:10px 16px;text-align:left;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:rgba(0,0,0,0.15);}
+tbody td{padding:12px 16px;font-size:13px;color:var(--text);border-bottom:1px solid rgba(46,123,196,0.07);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(46,123,196,0.04);}
+.td2{color:var(--text2)!important;font-size:12px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+.badge-pj{background:rgba(46,123,196,0.15);color:var(--blue2);border:1px solid rgba(46,123,196,0.3);}
+.badge-pf{background:rgba(224,168,48,0.12);color:var(--warning);border:1px solid rgba(224,168,48,0.25);}
+.badge-ativo{background:rgba(46,204,138,0.12);color:var(--success);border:1px solid rgba(46,204,138,0.25);}
+.badge-inativo{background:rgba(77,107,133,0.2);color:var(--text3);border:1px solid var(--border);}
+.btn-icon{background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--text2);cursor:pointer;transition:all 0.2s;font-size:12px;margin-right:4px;}
+.btn-icon:hover{border-color:var(--blue);color:var(--blue2);}
+.btn-icon.danger:hover{border-color:var(--danger);color:#ff8080;}
+.empty-state{text-align:center;padding:48px;color:var(--text3);font-size:14px;}
+/* DRAWER */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:200;display:none;justify-content:flex-end;}
+.drawer-overlay.aberto{display:flex;}
+.drawer{width:700px;max-width:95vw;height:100vh;background:var(--navy2);border-left:1px solid var(--border2);display:flex;flex-direction:column;animation:slideDrawer 0.25s ease;overflow:hidden;}
+@keyframes slideDrawer{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.drawer-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.drawer-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;}
+.drawer-close{background:transparent;border:1px solid var(--border);border-radius:6px;width:32px;height:32px;color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.drawer-close:hover{border-color:var(--danger);color:#ff8080;}
+.drawer-body{flex:1;overflow-y:auto;}
+.drawer-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;background:var(--navy2);}
+/* TIPO */
+.tipo-toggle{display:flex;gap:10px;padding:20px 24px 0;}
+.tipo-btn{flex:1;padding:12px;border:2px solid var(--border);border-radius:10px;background:var(--navy);cursor:pointer;text-align:center;transition:all 0.2s;color:var(--text2);}
+.tipo-btn.ativo{border-color:var(--blue);background:rgba(46,123,196,0.12);color:var(--text);}
+.tipo-icon{font-size:22px;display:block;margin-bottom:4px;}
+/* TABS */
+.tabs{display:flex;padding:0 24px;margin-top:16px;border-bottom:1px solid var(--border);}
+.tab-btn{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text3);transition:all 0.2s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.ativo{color:var(--blue2);border-bottom-color:var(--blue);}
+.tab-panel{display:none;padding:20px 24px;}
+.tab-panel.ativo{display:block;}
+/* FORM */
+.fsec{margin-bottom:20px;}
+.fsec-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue2);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:14px;}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px;}
+.fg{display:flex;flex-direction:column;gap:6px;}
+.fg label{font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text2);}
+.fg input,.fg select,.fg textarea{background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;width:100%;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--text3);}
+.fg select option{background:var(--navy2);}
+.fg select:disabled,.fg input:disabled{opacity:0.5;}
+.fg textarea{resize:vertical;min-height:70px;}
+.cnpj-row{display:flex;gap:8px;align-items:flex-end;}
+.cnpj-row .fg{flex:1;}
+.btn-consultar{padding:10px 14px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--blue2);font-size:12px;cursor:pointer;white-space:nowrap;transition:all 0.2s;height:40px;}
+.btn-consultar:hover{background:rgba(46,123,196,0.12);}
+.btn-consultar:disabled{opacity:0.5;cursor:not-allowed;}
+.cnpj-status{font-size:11px;color:var(--text3);margin-top:4px;min-height:16px;}
+/* MINI TABLE */
+.mtable{width:100%;border-collapse:collapse;margin-top:8px;}
+.mtable th{padding:8px 12px;font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text3);background:rgba(0,0,0,0.2);border-bottom:1px solid var(--border);}
+.mtable td{padding:10px 12px;font-size:12px;border-bottom:1px solid rgba(46,123,196,0.07);}
+.mtable tr:last-child td{border-bottom:none;}
+.btn-add{padding:8px 16px;background:transparent;border:1px dashed var(--border2);border-radius:8px;color:var(--blue2);font-size:12px;cursor:pointer;width:100%;margin-top:8px;transition:all 0.2s;}
+.btn-add:hover{background:rgba(46,123,196,0.08);}
+/* PIX */
+.pix-item{display:grid;grid-template-columns:140px 1fr 36px;gap:8px;align-items:center;margin-bottom:8px;}
+.pix-item select,.pix-item input{background:var(--navy);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;}
+.pix-item select option{background:var(--navy2);}
+.btn-rm{background:transparent;border:1px solid var(--border);border-radius:6px;width:32px;height:32px;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.btn-rm:hover{border-color:var(--danger);color:#ff8080;}
+/* ALERTA */
+.alerta-modal{background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#ff8080;margin:0 24px 12px;display:none;}
+.alerta-modal.visivel{display:block;}
+/* MINI MODAL */
+.mmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:300;display:none;align-items:center;justify-content:center;}
+.mmodal-overlay.aberto{display:flex;}
+.mmodal{background:var(--navy2);border:1px solid var(--border2);border-radius:14px;padding:28px;width:480px;max-width:95vw;box-shadow:0 24px 48px rgba(0,0,0,0.5);}
+.mmodal h3{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;margin-bottom:18px;}
+.mmodal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+/* BTNS */
+.btn-salvar{padding:11px 24px;background:var(--blue);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.btn-salvar:hover{background:var(--blue2);}
+.btn-salvar:disabled{opacity:0.6;cursor:not-allowed;}
+.btn-cancelar{padding:11px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;transition:all 0.2s;}
+.btn-cancelar:hover{border-color:var(--text2);color:var(--text);}
+/* TOAST */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:10px;}
+.toast{background:var(--navy2);border:1px solid var(--border2);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,0.4);display:flex;align-items:center;gap:10px;min-width:280px;}
+.toast.sucesso{border-left:3px solid var(--success);}
+.toast.erro{border-left:3px solid var(--danger);}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.6s linear infinite;margin:48px auto;display:block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.fade-in{animation:fadeIn 0.3s ease;}
 </style>
 </head>
 <body>
-
-<!-- TOPBAR -->
 <div class="topbar">
   <a class="topbar-logo" href="index.html">
-    <div class="topbar-logo-mark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-      </svg>
-    </div>
+    <div class="topbar-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
     SAPIENS
   </a>
   <div class="topbar-sep"></div>
-  <div class="topbar-modulo">
-    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-    Cadastro de Fornecedores
-  </div>
+  <div class="topbar-modulo">Cadastro de Fornecedores</div>
   <div class="topbar-right">
     <div class="obra-chip">Obra: <span id="obra-nome-display">—</span></div>
-    <a class="btn-voltar" href="index.html">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      Portal
-    </a>
+    <a class="btn-voltar" href="index.html">← Portal</a>
   </div>
 </div>
 
-<!-- CONTEÚDO -->
 <div class="page">
   <div class="page-header">
-    <div>
-      <div class="page-title">Fornecedores</div>
-      <div class="page-subtitle">Cadastro e gestão de fornecedores</div>
-    </div>
-    <button class="btn-novo" onclick="abrirFormNovo()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Novo fornecedor
-    </button>
+    <div><div class="page-title">Fornecedores</div><div class="page-subtitle">Cadastro e gestão de fornecedores e parceiros</div></div>
+    <button class="btn-novo" onclick="abrirDrawer()">+ Novo fornecedor</button>
   </div>
-
-  <!-- FORMULÁRIO NOVO/EDITAR -->
-  <div class="form-card" id="form-card" style="display:none">
-    <h3 id="form-titulo">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      Novo fornecedor
-    </h3>
-    <input type="hidden" id="form-id"/>
-    <div class="form-row">
-      <div class="form-group" style="grid-column: span 2">
-        <label>Razão social *</label>
-        <input type="text" id="f-razao" placeholder="Nome empresarial completo"/>
-      </div>
-      <div class="form-group">
-        <label>Nome fantasia</label>
-        <input type="text" id="f-fantasia" placeholder="Nome comercial"/>
-      </div>
+  <div class="toolbar">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="busca" placeholder="Buscar por razão social, CNPJ/CPF ou cidade..." oninput="filtrar()"/>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>CNPJ</label>
-        <input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" maxlength="18" oninput="mascararCnpj(this)"/>
-      </div>
-      <div class="form-group">
-        <label>E-mail</label>
-        <input type="email" id="f-email" placeholder="contato@empresa.com"/>
-      </div>
-      <div class="form-group">
-        <label>Telefone</label>
-        <input type="text" id="f-telefone" placeholder="(84) 99999-9999" maxlength="15" oninput="mascararTelefone(this)"/>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group" style="grid-column: span 2">
-        <label>Endereço</label>
-        <input type="text" id="f-endereco" placeholder="Rua, número, complemento"/>
-      </div>
-      <div class="form-group">
-        <label>Estado</label>
-        <select id="f-estado" onchange="carregarCidades('f-estado','f-cidade')">
-          <option value="">Selecione...</option>
-          <option value="AC">AC – Acre</option><option value="AL">AL – Alagoas</option>
-          <option value="AP">AP – Amapá</option><option value="AM">AM – Amazonas</option>
-          <option value="BA">BA – Bahia</option><option value="CE">CE – Ceará</option>
-          <option value="DF">DF – Distrito Federal</option><option value="ES">ES – Espírito Santo</option>
-          <option value="GO">GO – Goiás</option><option value="MA">MA – Maranhão</option>
-          <option value="MT">MT – Mato Grosso</option><option value="MS">MS – Mato Grosso do Sul</option>
-          <option value="MG">MG – Minas Gerais</option><option value="PA">PA – Pará</option>
-          <option value="PB">PB – Paraíba</option><option value="PR">PR – Paraná</option>
-          <option value="PE">PE – Pernambuco</option><option value="PI">PI – Piauí</option>
-          <option value="RJ">RJ – Rio de Janeiro</option><option value="RN">RN – Rio Grande do Norte</option>
-          <option value="RS">RS – Rio Grande do Sul</option><option value="RO">RO – Rondônia</option>
-          <option value="RR">RR – Roraima</option><option value="SC">SC – Santa Catarina</option>
-          <option value="SP">SP – São Paulo</option><option value="SE">SE – Sergipe</option>
-          <option value="TO">TO – Tocantins</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Cidade</label>
-        <select id="f-cidade" disabled>
-          <option value="">Selecione o estado</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>CEP</label>
-        <input type="text" id="f-cep" placeholder="00000-000" maxlength="9" oninput="mascararCep(this)"/>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Status</label>
-        <select id="f-status">
-          <option value="ativo">Ativo</option>
-          <option value="inativo">Inativo</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-actions">
-      <button class="btn-cancelar" onclick="fecharForm()">Cancelar</button>
-      <button class="btn-salvar" id="btn-salvar-form" onclick="salvarFornecedor()">Salvar</button>
-    </div>
+    <button class="btn-sm" id="btn-inativos" onclick="toggleInativos()">👁 Mostrar inativos</button>
+    <button class="btn-sm" onclick="carregar()">↻ Atualizar</button>
   </div>
-
-  <!-- BUSCA -->
-  <div class="search-bar">
-    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" id="busca" placeholder="Buscar por razão social, CNPJ ou cidade..." oninput="filtrarTabela()"/>
-  </div>
-
-  <!-- TABELA -->
   <div class="table-wrap">
-    <div class="table-header">
-      <h3>Fornecedores cadastrados</h3>
-      <span class="table-count" id="table-count"></span>
+    <div class="table-header"><h3>Fornecedores cadastrados</h3><span class="tcount" id="tcount"></span></div>
+    <div id="tabela-wrap"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="drawer-overlay" id="drawer" onclick="if(event.target===this)fecharDrawer()">
+  <div class="drawer" onclick="event.stopPropagation()">
+    <div class="drawer-header">
+      <div class="drawer-title" id="drawer-titulo">Novo fornecedor</div>
+      <button class="drawer-close" onclick="fecharDrawer()">✕</button>
     </div>
-    <div id="tabela-wrap">
-      <div class="loading"><div class="spinner"></div></div>
+    <div class="alerta-modal" id="alerta-modal"></div>
+    <div class="drawer-body">
+      <input type="hidden" id="f-id"/>
+      <div class="tipo-toggle">
+        <button class="tipo-btn ativo" id="tipo-pj" onclick="setTipo('PJ')"><span class="tipo-icon">🏗️</span><span style="font-size:13px;font-weight:600">Pessoa Jurídica</span></button>
+        <button class="tipo-btn" id="tipo-pf" onclick="setTipo('PF')"><span class="tipo-icon">👤</span><span style="font-size:13px;font-weight:600">Pessoa Física</span></button>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn ativo" onclick="mudarTab('dados',this)">Dados principais</button>
+        <button class="tab-btn" onclick="mudarTab('socios',this)" id="tab-btn-socios">Sócios / QSA</button>
+        <button class="tab-btn" onclick="mudarTab('contatos',this)">Contatos</button>
+        <button class="tab-btn" onclick="mudarTab('bancarios',this)">Dados bancários</button>
+      </div>
+
+      <!-- TAB DADOS -->
+      <div id="tab-dados" class="tab-panel ativo">
+        <div class="fsec">
+          <div class="fsec-title" id="sec-doc">CNPJ</div>
+          <div class="cnpj-row">
+            <div class="fg"><label id="label-doc">CNPJ *</label><input type="text" id="f-cpf-cnpj" placeholder="00.000.000/0000-00" oninput="mascaraDoc(this)" maxlength="18"/></div>
+            <button class="btn-consultar" id="btn-consultar" onclick="consultarCnpj()">🔍 Consultar</button>
+          </div>
+          <div class="cnpj-status" id="cnpj-status"></div>
+        </div>
+        <div class="fsec">
+          <div class="fsec-title">IDENTIFICAÇÃO</div>
+          <div class="frow">
+            <div class="fg" style="grid-column:span 2"><label id="label-razao">Razão social *</label><input type="text" id="f-razao" placeholder="Razão Social / Nome Completo"/></div>
+            <div class="fg" id="g-fantasia"><label>Nome fantasia</label><input type="text" id="f-fantasia" placeholder="Nome Fantasia"/></div>
+          </div>
+          <div class="frow" id="g-pj-fields">
+            <div class="fg"><label>Situação RF</label><input type="text" id="f-situacao-rf" placeholder="Situação"/></div>
+            <div class="fg"><label>Natureza jurídica</label><input type="text" id="f-natureza-jur" placeholder="Natureza Jurídica"/></div>
+            <div class="fg"><label>Porte</label><input type="text" id="f-porte" placeholder="ME, EPP, Grande..."/></div>
+          </div>
+          <div class="frow" id="g-cnae">
+            <div class="fg" style="grid-column:span 2"><label>CNAE principal</label><input type="text" id="f-cnae" placeholder="CNAE"/></div>
+          </div>
+          <div class="fg" id="g-cnaes-sec" style="display:none"><label>CNAEs secundários</label><textarea id="f-cnaes-sec" style="min-height:60px;font-size:12px" placeholder="Atividades secundárias..."></textarea></div>
+        </div>
+        <div class="fsec">
+          <div class="fsec-title">ENDEREÇO</div>
+          <div class="frow">
+            <div class="fg" style="grid-column:span 2"><label>Logradouro</label><input type="text" id="f-logradouro" placeholder="Rua, Avenida..."/></div>
+            <div class="fg"><label>Número</label><input type="text" id="f-numero" placeholder="Nº"/></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label>Complemento</label><input type="text" id="f-complemento" placeholder="Sala, Apto..."/></div>
+            <div class="fg"><label>Bairro</label><input type="text" id="f-bairro" placeholder="Bairro"/></div>
+          </div>
+          <div class="frow">
+            <div class="fg">
+              <label>Estado</label>
+              <select id="f-estado" onchange="carregarCidades('f-estado','f-cidade')">
+                <option value="">Selecione...</option>
+                <option value="AC">AC – Acre</option><option value="AL">AL – Alagoas</option><option value="AP">AP – Amapá</option><option value="AM">AM – Amazonas</option><option value="BA">BA – Bahia</option><option value="CE">CE – Ceará</option><option value="DF">DF – Distrito Federal</option><option value="ES">ES – Espírito Santo</option><option value="GO">GO – Goiás</option><option value="MA">MA – Maranhão</option><option value="MT">MT – Mato Grosso</option><option value="MS">MS – Mato Grosso do Sul</option><option value="MG">MG – Minas Gerais</option><option value="PA">PA – Pará</option><option value="PB">PB – Paraíba</option><option value="PR">PR – Paraná</option><option value="PE">PE – Pernambuco</option><option value="PI">PI – Piauí</option><option value="RJ">RJ – Rio de Janeiro</option><option value="RN">RN – Rio Grande do Norte</option><option value="RS">RS – Rio Grande do Sul</option><option value="RO">RO – Rondônia</option><option value="RR">RR – Roraima</option><option value="SC">SC – Santa Catarina</option><option value="SP">SP – São Paulo</option><option value="SE">SE – Sergipe</option><option value="TO">TO – Tocantins</option>
+              </select>
+            </div>
+            <div class="fg" style="flex:2"><label>Cidade</label><select id="f-cidade" disabled><option value="">Selecione o estado primeiro</option></select></div>
+            <div class="fg">
+              <label>CEP</label>
+              <div style="display:flex;gap:6px">
+                <input type="text" id="f-cep" placeholder="00000-000" maxlength="9" oninput="mascaraCep(this)" onblur="buscarCep(this.value)" style="flex:1"/>
+                <button class="btn-consultar" onclick="buscarCepPorEndereco()" title="Buscar CEP pelo endereço">🔍</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fsec">
+          <div class="fsec-title">CONTATO PRINCIPAL</div>
+          <div class="frow">
+            <div class="fg"><label>E-mail</label><input type="email" id="f-email" placeholder="email@empresa.com"/></div>
+            <div class="fg"><label>Telefone</label><input type="text" id="f-telefone" placeholder="(84) 9 9999-9999"/></div>
+          </div>
+        </div>
+        <div class="fsec">
+          <div class="fsec-title">OBSERVAÇÕES</div>
+          <div class="fg"><textarea id="f-observacoes" placeholder="Observações gerais..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- TAB SÓCIOS -->
+      <div id="tab-socios" class="tab-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span style="font-size:13px;color:var(--text2)">Quadro Societário / QSA</span>
+          <button class="btn-sm" onclick="abrirModalSocio()">+ Adicionar sócio</button>
+        </div>
+        <div id="socios-lista"><div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Salve o fornecedor primeiro para adicionar sócios.</div></div>
+      </div>
+
+      <!-- TAB CONTATOS -->
+      <div id="tab-contatos" class="tab-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span style="font-size:13px;color:var(--text2)">Contatos adicionais</span>
+          <button class="btn-sm" onclick="abrirModalContato()">+ Adicionar contato</button>
+        </div>
+        <div id="contatos-lista"><div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Salve o fornecedor primeiro para adicionar contatos.</div></div>
+      </div>
+
+      <!-- TAB BANCÁRIOS -->
+      <div id="tab-bancarios" class="tab-panel">
+        <div class="fsec">
+          <div class="fsec-title">CONTA BANCÁRIA PRINCIPAL</div>
+          <div class="frow">
+            <div class="fg" style="grid-column:span 2"><label>Banco</label><input type="text" id="f-banco-nome" placeholder="Ex: Banco do Brasil, Caixa, Itaú..."/></div>
+            <div class="fg"><label>Agência</label><input type="text" id="f-banco-agencia" placeholder="0000-0"/></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label>Conta</label><input type="text" id="f-banco-conta" placeholder="00000-0"/></div>
+            <div class="fg"><label>Tipo</label><select id="f-banco-tipo"><option value="corrente">Conta Corrente</option><option value="poupanca">Conta Poupança</option><option value="pagamento">Conta Pagamento</option></select></div>
+            <div class="fg"><label>Titular</label><input type="text" id="f-banco-titular" placeholder="Nome do titular"/></div>
+          </div>
+          <div class="frow"><div class="fg"><label>CPF/CNPJ do titular</label><input type="text" id="f-banco-titular-doc" placeholder="000.000.000-00"/></div></div>
+        </div>
+        <div class="fsec">
+          <div class="fsec-title">CHAVES PIX</div>
+          <div id="pix-lista"></div>
+          <button class="btn-add" onclick="addPix()">+ Adicionar chave PIX</button>
+        </div>
+        <div class="fsec">
+          <div class="fsec-title">OBSERVAÇÕES BANCÁRIAS</div>
+          <div class="fg"><textarea id="f-banco-obs" rows="2" placeholder="Informações adicionais sobre pagamento..."></textarea></div>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn-cancelar" onclick="fecharDrawer()">Cancelar</button>
+      <button class="btn-salvar" id="btn-salvar" onclick="salvar()">Salvar fornecedor</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL DETALHES -->
-<div class="modal-overlay" id="modal-detalhes">
-  <div class="modal" onclick="event.stopPropagation()">
-    <h3 id="modal-nome">Fornecedor</h3>
-    <div id="modal-body"></div>
-    <div class="audit-info" id="modal-audit"></div>
-    <div class="modal-actions">
-      <button class="btn-cancelar" onclick="fecharModalDetalhes()">Fechar</button>
-      <button class="btn-salvar" id="modal-btn-editar">Editar</button>
+<!-- MODAL SÓCIO -->
+<div class="mmodal-overlay" id="modal-socio" onclick="if(event.target===this)fecharModalSocio()">
+  <div class="mmodal" onclick="event.stopPropagation()">
+    <h3>Sócio / Representante</h3>
+    <input type="hidden" id="socio-id"/>
+    <div class="frow" style="margin-bottom:12px">
+      <div class="fg"><label>Nome *</label><input type="text" id="socio-nome" placeholder="Nome completo"/></div>
+      <div class="fg"><label>Qualificação</label><input type="text" id="socio-qualificacao" placeholder="Sócio, Diretor..."/></div>
+    </div>
+    <div class="fg" style="margin-bottom:0"><label>CPF / CNPJ do sócio</label><input type="text" id="socio-cpf-cnpj" placeholder="000.000.000-00"/></div>
+    <div class="mmodal-actions">
+      <button class="btn-cancelar" onclick="fecharModalSocio()">Cancelar</button>
+      <button class="btn-salvar" onclick="salvarSocio()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTATO -->
+<div class="mmodal-overlay" id="modal-contato" onclick="if(event.target===this)fecharModalContato()">
+  <div class="mmodal" onclick="event.stopPropagation()">
+    <h3>Contato</h3>
+    <input type="hidden" id="contato-id"/>
+    <div class="frow" style="margin-bottom:12px">
+      <div class="fg"><label>Nome *</label><input type="text" id="contato-nome" placeholder="Nome completo"/></div>
+      <div class="fg"><label>Cargo</label><input type="text" id="contato-cargo" placeholder="Gerente, Diretor..."/></div>
+    </div>
+    <div class="frow" style="margin-bottom:12px">
+      <div class="fg"><label>Telefone</label><input type="text" id="contato-telefone" placeholder="(84) 9 9999-9999"/></div>
+      <div class="fg"><label>E-mail</label><input type="email" id="contato-email" placeholder="email@empresa.com"/></div>
+    </div>
+    <div class="fg" style="margin-bottom:12px"><label>Observação</label><input type="text" id="contato-descricao" placeholder="Informação adicional..."/></div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2)">
+      <input type="checkbox" id="contato-principal" style="accent-color:var(--blue);width:15px;height:15px"/> Contato principal
+    </label>
+    <div class="mmodal-actions">
+      <button class="btn-cancelar" onclick="fecharModalContato()">Cancelar</button>
+      <button class="btn-salvar" onclick="salvarContato()">Salvar</button>
     </div>
   </div>
 </div>
@@ -276,327 +350,378 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script>
-const SUPABASE_URL = 'https://yoslcgwpboggofeubtqk.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_SslKwCxg51q9N_hZbbS6Uw_FcBOEhnU';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL='https://yoslcgwpboggofeubtqk.supabase.co';
+const SUPABASE_KEY='sb_publishable_SslKwCxg51q9N_hZbbS6Uw_FcBOEhnU';
+const {createClient}=supabase;
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+let sessao=null,obraId=null,fornecedores=[],fornecedorEditando=null;
+let _tipo='PJ',_pixLista=[],_sociosTemp=[],_mostrarInativos=false;
 
-let sessao = null;
-let obraId = null;
-let fornecedores = [];
-let fornecedorEditando = null;
-
-// ══════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
-  sessao = session;
-
-  const params = new URLSearchParams(window.location.search);
-  obraId = params.get('obra');
-
-  if (obraId) {
-    const { data: obra } = await sb.from('obras').select('nome').eq('id', obraId).single();
-    if (obra) document.getElementById('obra-nome-display').textContent = obra.nome;
-  }
-
-  await carregarFornecedores();
+window.addEventListener('DOMContentLoaded',async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='index.html';return;}
+  sessao=session;
+  const params=new URLSearchParams(window.location.search);
+  obraId=params.get('obra');
+  if(obraId){const {data:obra}=await sb.from('obras').select('nome').eq('id',obraId).single();if(obra)document.getElementById('obra-nome-display').textContent=obra.nome;}
+  await carregar();
 });
 
-// ══════════════════════════════════════════
-// CARREGAR
-// ══════════════════════════════════════════
-async function carregarFornecedores() {
-  const { data, error } = await sb.from('fornecedores')
-    .select('*, criado_por_usr:usuarios!fornecedores_criado_por_fkey(nome), editado_por_usr:usuarios!fornecedores_editado_por_fkey(nome)')
-    .order('razao_social');
+async function carregar(){
+  document.getElementById('tabela-wrap').innerHTML='<div class="spinner"></div>';
+  let q=sb.from('fornecedores').select('*,criado_por_usr:usuarios!fornecedores_criado_por_fkey(nome)').order('razao_social');
+  if(!_mostrarInativos)q=q.eq('ativo',true);
+  const {data,error}=await q;
+  if(error){toast('Erro ao carregar: '+error.message,'erro');return;}
+  fornecedores=data||[];
+  renderTabela(fornecedores);
+}
 
-  if (error) {
-    mostrarToast('Erro ao carregar fornecedores.', 'erro');
-    return;
+function renderTabela(lista){
+  document.getElementById('tcount').textContent=`${lista.length} registro(s)`;
+  if(!lista.length){document.getElementById('tabela-wrap').innerHTML='<div class="empty-state">Nenhum fornecedor encontrado.</div>';return;}
+  document.getElementById('tabela-wrap').innerHTML=`<table><thead><tr><th>Tipo</th><th>CNPJ / CPF</th><th>Razão social / Nome</th><th>Cidade / Estado</th><th>Telefone</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+    ${lista.map(f=>`<tr class="fade-in" style="${f.ativo===false?'opacity:0.6':''}">
+      <td><span class="badge badge-${f.tipo_pessoa==='PF'?'pf':'pj'}">${f.tipo_pessoa||'PJ'}</span></td>
+      <td class="td2">${mascaraDocStr(f.cpf_cnpj||f.cnpj||'',f.tipo_pessoa)}</td>
+      <td><div style="font-weight:500">${f.razao_social}</div>${f.nome_fantasia?`<div style="font-size:11px;color:var(--text3)">${f.nome_fantasia}</div>`:''}</td>
+      <td class="td2">${[f.cidade,f.estado].filter(Boolean).join(' / ')||'—'}</td>
+      <td class="td2">${f.telefone||'—'}</td>
+      <td><span class="badge badge-${f.ativo!==false?'ativo':'inativo'}">${f.ativo!==false?'ativo':'inativo'}</span></td>
+      <td>
+        <button class="btn-icon" onclick="editar('${f.id}')">Editar</button>
+        <button class="btn-icon danger" onclick="toggleAtivo('${f.id}',${f.ativo!==false})">${f.ativo!==false?'Inativar':'Ativar'}</button>
+      </td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+function filtrar(){
+  const q=document.getElementById('busca').value.toLowerCase();
+  if(!q){renderTabela(fornecedores);return;}
+  renderTabela(fornecedores.filter(f=>(f.razao_social||'').toLowerCase().includes(q)||(f.nome_fantasia||'').toLowerCase().includes(q)||(f.cpf_cnpj||f.cnpj||'').includes(q)||(f.cidade||'').toLowerCase().includes(q)));
+}
+
+function toggleInativos(){
+  _mostrarInativos=!_mostrarInativos;
+  document.getElementById('btn-inativos').textContent=_mostrarInativos?'👁 Ocultar inativos':'👁 Mostrar inativos';
+  carregar();
+}
+
+async function toggleAtivo(id,ativo){
+  if(!confirm(ativo?'Inativar este fornecedor?':'Ativar este fornecedor?'))return;
+  const {error}=await sb.from('fornecedores').update({ativo:!ativo,editado_por:sessao.user.id}).eq('id',id);
+  if(error){toast('Erro ao atualizar.','erro');return;}
+  toast(ativo?'Fornecedor inativado.':'Fornecedor ativado.','sucesso');
+  await carregar();
+}
+
+function abrirDrawer(id){
+  fornecedorEditando=id||null;_tipo='PJ';_pixLista=[];_sociosTemp=[];
+  limparDrawer();
+  if(id){
+    document.getElementById('drawer-titulo').textContent='Editar fornecedor';
+    const f=fornecedores.find(x=>x.id===id);
+    if(f)preencherDrawer(f);
+  }else{
+    document.getElementById('drawer-titulo').textContent='Novo fornecedor';
   }
-
-  fornecedores = data || [];
-  renderizarTabela(fornecedores);
+  document.getElementById('drawer').classList.add('aberto');
 }
 
-function renderizarTabela(lista) {
-  const wrap = document.getElementById('tabela-wrap');
-  document.getElementById('table-count').textContent = `${lista.length} registro${lista.length !== 1 ? 's' : ''}`;
+function fecharDrawer(){document.getElementById('drawer').classList.remove('aberto');fornecedorEditando=null;}
+function editar(id){abrirDrawer(id);}
 
-  if (!lista.length) {
-    wrap.innerHTML = '<div class="empty-state">Nenhum fornecedor encontrado.</div>';
-    return;
+function limparDrawer(){
+  ['f-id','f-cpf-cnpj','f-razao','f-fantasia','f-situacao-rf','f-natureza-jur','f-porte','f-cnae','f-cnaes-sec','f-logradouro','f-numero','f-complemento','f-bairro','f-cep','f-email','f-telefone','f-observacoes','f-banco-nome','f-banco-agencia','f-banco-conta','f-banco-titular','f-banco-titular-doc','f-banco-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-estado').value='';
+  document.getElementById('f-cidade').innerHTML='<option value="">Selecione o estado primeiro</option>';
+  document.getElementById('f-cidade').disabled=true;
+  document.getElementById('f-banco-tipo').selectedIndex=0;
+  document.getElementById('pix-lista').innerHTML='';
+  document.getElementById('cnpj-status').textContent='';
+  document.getElementById('socios-lista').innerHTML='<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Salve o fornecedor primeiro para adicionar sócios.</div>';
+  document.getElementById('contatos-lista').innerHTML='<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Salve o fornecedor primeiro para adicionar contatos.</div>';
+  document.getElementById('alerta-modal').classList.remove('visivel');
+  setTipo('PJ');
+  mudarTab('dados',document.querySelector('.tab-btn'));
+}
+
+async function preencherDrawer(f){
+  setTipo(f.tipo_pessoa||'PJ');
+  const mapa={'f-id':'id','f-cpf-cnpj':'cpf_cnpj','f-razao':'razao_social','f-fantasia':'nome_fantasia','f-situacao-rf':'situacao_rf','f-natureza-jur':'natureza_jur','f-porte':'porte','f-cnae':'cnae_principal','f-cnaes-sec':'cnaes_secundarios','f-logradouro':'logradouro','f-numero':'numero','f-complemento':'complemento','f-bairro':'bairro','f-cep':'cep','f-email':'email','f-telefone':'telefone','f-observacoes':'observacoes','f-banco-nome':'banco_nome','f-banco-agencia':'banco_agencia','f-banco-conta':'banco_conta','f-banco-titular':'banco_titular','f-banco-titular-doc':'banco_titular_doc','f-banco-obs':'banco_obs'};
+  Object.entries(mapa).forEach(([elId,key])=>{const el=document.getElementById(elId);if(el)el.value=f[key]||'';});
+  if(f.banco_tipo)document.getElementById('f-banco-tipo').value=f.banco_tipo;
+  if(f.cnaes_secundarios)document.getElementById('g-cnaes-sec').style.display='';
+  const pix=f.pix_chaves?(typeof f.pix_chaves==='string'?JSON.parse(f.pix_chaves):f.pix_chaves):[];
+  renderPix(pix);
+  if(f.estado){document.getElementById('f-estado').value=f.estado;await carregarCidades('f-estado','f-cidade',f.cidade||'');}
+  await recarregarSocios();
+  await recarregarContatos();
+}
+
+function setTipo(tipo){
+  _tipo=tipo;
+  document.getElementById('tipo-pj').classList.toggle('ativo',tipo==='PJ');
+  document.getElementById('tipo-pf').classList.toggle('ativo',tipo==='PF');
+  document.getElementById('sec-doc').textContent=tipo==='PJ'?'CNPJ':'CPF';
+  document.getElementById('label-doc').textContent=tipo==='PJ'?'CNPJ *':'CPF *';
+  document.getElementById('label-razao').textContent=tipo==='PJ'?'Razão social *':'Nome completo *';
+  document.getElementById('f-cpf-cnpj').placeholder=tipo==='PJ'?'00.000.000/0000-00':'000.000.000-00';
+  document.getElementById('f-cpf-cnpj').maxLength=tipo==='PJ'?18:14;
+  ['g-fantasia','g-pj-fields','g-cnae','tab-btn-socios'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=tipo==='PJ'?'':'none';});
+  document.getElementById('btn-consultar').style.display=tipo==='PJ'?'':'none';
+}
+
+function mudarTab(nome,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('ativo'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('ativo'));
+  document.getElementById('tab-'+nome).classList.add('ativo');
+  if(btn)btn.classList.add('ativo');
+}
+
+async function consultarCnpj(){
+  const cnpj=(document.getElementById('f-cpf-cnpj').value||'').replace(/\D/g,'');
+  if(cnpj.length!==14){alertaModal('CNPJ inválido — informe 14 dígitos.');return;}
+  const status=document.getElementById('cnpj-status');
+  status.textContent='🔍 Consultando Receita Federal...';
+  document.getElementById('btn-consultar').disabled=true;
+  const T=8000;
+  const tryBrasilAPI=()=>fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`,{signal:AbortSignal.timeout(T)}).then(r=>{if(!r.ok)throw new Error();return r.json();}).then(d=>({razao:d.razao_social,fantasia:d.nome_fantasia,situacao:d.descricao_situacao_cadastral,porte:d.descricao_porte,natureza:d.descricao_natureza_juridica,cnae:d.cnae_fiscal?`${d.cnae_fiscal} — ${d.cnae_fiscal_descricao||''}`:'',logradouro:d.logradouro,numero:d.numero,complemento:d.complemento,bairro:d.bairro,municipio:d.municipio,uf:d.uf,cep:d.cep,email:d.email||'',telefone:(d.ddd_telefone_1||'').replace(/\D/g,''),socios:(d.qsa||[]).map(s=>({nome:s.nome_socio||s.nome,qualificacao:s.qualificacao_socio||s.qual,cpf_cnpj_socio:s.cnpj_cpf_do_socio||''}))}));
+  const tryReceitaWS=()=>fetch(`https://receitaws.com.br/v1/cnpj/${cnpj}`,{signal:AbortSignal.timeout(T)}).then(r=>{if(!r.ok)throw new Error();return r.json();}).then(d=>{if(d.status==='ERROR')throw new Error();return{razao:d.nome,fantasia:d.fantasia,situacao:d.situacao,porte:d.porte,natureza:d.natureza_juridica,cnae:d.atividade_principal?.[0]?`${d.atividade_principal[0].code} — ${d.atividade_principal[0].text}`:'',logradouro:d.logradouro,numero:d.numero,complemento:d.complemento,bairro:d.bairro,municipio:d.municipio,uf:d.uf,cep:(d.cep||'').replace(/\D/g,''),email:d.email||'',telefone:(d.telefone||'').replace(/\D/g,''),socios:(d.qsa||[]).map(s=>({nome:s.nome,qualificacao:s.qual,cpf_cnpj_socio:''}))}});
+  const tryMinhaReceita=()=>fetch(`https://minhareceita.org/${cnpj}`,{signal:AbortSignal.timeout(T)}).then(r=>{if(!r.ok)throw new Error();return r.json();}).then(d=>{if(d.error)throw new Error();return{razao:d.razao_social,fantasia:d.nome_fantasia,situacao:d.descricao_situacao_cadastral,porte:d.descricao_porte,natureza:d.descricao_natureza_juridica,cnae:d.cnae_fiscal?`${d.cnae_fiscal} — ${d.cnae_fiscal_descricao||''}`:'',logradouro:d.logradouro,numero:d.numero,complemento:d.complemento,bairro:d.bairro,municipio:d.municipio,uf:d.uf,cep:(d.cep||'').replace(/\D/g,''),email:d.email||'',telefone:(d.ddd_telefone_1||'').replace(/\D/g,''),socios:(d.qsa||[]).map(s=>({nome:s.nome_socio||s.nome,qualificacao:s.qualificacao_socio||s.qual,cpf_cnpj_socio:s.cnpj_cpf_do_socio||''}))};});
+  try{
+    let d;
+    try{d=await tryBrasilAPI();}catch{try{d=await tryReceitaWS();}catch{d=await tryMinhaReceita();}}
+    document.getElementById('btn-consultar').disabled=false;
+    document.getElementById('f-razao').value=d.razao||'';
+    document.getElementById('f-fantasia').value=d.fantasia||'';
+    document.getElementById('f-situacao-rf').value=d.situacao||'';
+    document.getElementById('f-porte').value=d.porte||'';
+    document.getElementById('f-natureza-jur').value=d.natureza||'';
+    document.getElementById('f-cnae').value=d.cnae||'';
+    document.getElementById('f-logradouro').value=d.logradouro||'';
+    document.getElementById('f-numero').value=d.numero||'';
+    document.getElementById('f-complemento').value=d.complemento||'';
+    document.getElementById('f-bairro').value=d.bairro||'';
+    document.getElementById('f-email').value=d.email||'';
+    document.getElementById('f-telefone').value=d.telefone||'';
+    if(d.cep){const el=document.getElementById('f-cep');el.value=d.cep;mascaraCep(el);}
+    if(d.uf){document.getElementById('f-estado').value=d.uf;await carregarCidades('f-estado','f-cidade',d.municipio||'');}
+    if(d.socios?.length){_sociosTemp=d.socios;renderSociosTemp(d.socios);}
+    status.textContent='✅ Dados preenchidos automaticamente!';
+    setTimeout(()=>status.textContent='',4000);
+    toast('CNPJ consultado com sucesso!','sucesso');
+  }catch{
+    document.getElementById('btn-consultar').disabled=false;
+    status.textContent='❌ Todas as APIs falharam. Preencha manualmente.';
   }
-
-  wrap.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>Razão social</th>
-          <th>CNPJ</th>
-          <th>Cidade / Estado</th>
-          <th>Telefone</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${lista.map(f => `
-          <tr class="fade-in">
-            <td>
-              <div style="font-weight:500">${f.razao_social}</div>
-              ${f.nome_fantasia ? `<div style="font-size:11px;color:var(--text3)">${f.nome_fantasia}</div>` : ''}
-            </td>
-            <td class="td-secondary">${f.cnpj || '—'}</td>
-            <td class="td-secondary">${[f.cidade, f.estado].filter(Boolean).join(' / ') || '—'}</td>
-            <td class="td-secondary">${f.telefone || '—'}</td>
-            <td><span class="badge badge-${f.status === 'ativo' ? 'ativo' : 'inativo'}">${f.status}</span></td>
-            <td>
-              <button class="btn-icon" onclick="abrirDetalhes('${f.id}')">Ver</button>
-              <button class="btn-icon" onclick="abrirFormEditar('${f.id}')">Editar</button>
-            </td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
 }
 
-// ══════════════════════════════════════════
-// FORMULÁRIO
-// ══════════════════════════════════════════
-function abrirFormNovo() {
-  fornecedorEditando = null;
-  limparForm();
-  document.getElementById('form-titulo').innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-    Novo fornecedor`;
-  document.getElementById('btn-salvar-form').textContent = 'Salvar';
-  document.getElementById('form-card').style.display = 'block';
-  document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+async function buscarCep(cep){
+  const raw=cep.replace(/\D/g,'');if(raw.length!==8)return;
+  const status=document.getElementById('cnpj-status');
+  status.textContent='🔍 Buscando endereço...';
+  try{
+    const d=await fetch(`https://viacep.com.br/ws/${raw}/json/`).then(r=>r.json());
+    if(d.erro){status.textContent='❌ CEP não encontrado.';return;}
+    const lEl=document.getElementById('f-logradouro'),bEl=document.getElementById('f-bairro');
+    if(lEl&&!lEl.value)lEl.value=d.logradouro||'';
+    if(bEl&&!bEl.value)bEl.value=d.bairro||'';
+    if(d.uf&&!document.getElementById('f-estado').value){document.getElementById('f-estado').value=d.uf;await carregarCidades('f-estado','f-cidade',d.localidade||'');}
+    status.textContent='✅ Endereço preenchido!';
+    setTimeout(()=>status.textContent='',3000);
+    document.getElementById('f-numero').focus();
+  }catch{status.textContent='';}
 }
 
-async function abrirFormEditar(id) {
-  const f = fornecedores.find(x => x.id === id);
-  if (!f) return;
-  fornecedorEditando = f;
-
-  document.getElementById('form-id').value   = f.id;
-  document.getElementById('f-razao').value   = f.razao_social || '';
-  document.getElementById('f-fantasia').value = f.nome_fantasia || '';
-  document.getElementById('f-cnpj').value    = f.cnpj || '';
-  document.getElementById('f-email').value   = f.email || '';
-  document.getElementById('f-telefone').value = f.telefone || '';
-  document.getElementById('f-endereco').value = f.endereco || '';
-  document.getElementById('f-cep').value     = f.cep || '';
-  document.getElementById('f-status').value  = f.status || 'ativo';
-
-  const selEstado = document.getElementById('f-estado');
-  selEstado.value = f.estado || '';
-  if (f.estado) await carregarCidades('f-estado', 'f-cidade', f.cidade || '');
-
-  document.getElementById('form-titulo').innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-    Editar fornecedor`;
-  document.getElementById('btn-salvar-form').textContent = 'Salvar alterações';
-  document.getElementById('form-card').style.display = 'block';
-  document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
-  fecharModalDetalhes();
+async function buscarCepPorEndereco(){
+  const uf=document.getElementById('f-estado').value;
+  const cidade=document.getElementById('f-cidade').value;
+  const logradouro=document.getElementById('f-logradouro').value.trim();
+  if(!uf||!cidade||!logradouro){toast('Preencha estado, cidade e logradouro primeiro.','erro');return;}
+  const status=document.getElementById('cnpj-status');
+  status.textContent='🔍 Buscando CEP...';
+  try{
+    const lista=await fetch(`https://viacep.com.br/ws/${uf}/${encodeURIComponent(cidade)}/${encodeURIComponent(logradouro)}/json/`).then(r=>r.json());
+    if(!lista?.length){status.textContent='❌ Nenhum CEP encontrado.';return;}
+    if(lista.length===1){const el=document.getElementById('f-cep');el.value=lista[0].cep;mascaraCep(el);if(!document.getElementById('f-bairro').value)document.getElementById('f-bairro').value=lista[0].bairro||'';status.textContent='✅ CEP preenchido!';setTimeout(()=>status.textContent='',3000);}
+    else{mostrarSeletorCep(lista);status.textContent='';}
+  }catch{status.textContent='❌ Erro ao buscar CEP.';}
 }
 
-function fecharForm() {
-  document.getElementById('form-card').style.display = 'none';
-  limparForm();
-  fornecedorEditando = null;
+function mostrarSeletorCep(lista){
+  const ex=document.getElementById('modal-seletor-cep');if(ex)ex.remove();
+  const overlay=document.createElement('div');
+  overlay.id='modal-seletor-cep';overlay.className='mmodal-overlay aberto';
+  overlay.innerHTML=`<div class="mmodal" onclick="event.stopPropagation()" style="max-width:500px"><h3>Selecione o CEP</h3><div style="max-height:300px;overflow-y:auto;margin:-4px 0 16px">${lista.slice(0,20).map(r=>`<div onclick="selecionarCep('${r.cep}','${(r.bairro||'').replace(/'/g,"\\'")}');" style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;border-radius:6px" onmouseover="this.style.background='rgba(46,123,196,0.08)'" onmouseout="this.style.background=''"><strong>${r.cep}</strong> — ${r.logradouro||''}${r.bairro?` <span style="font-size:11px;color:var(--text3)">(${r.bairro})</span>`:''}</div>`).join('')}${lista.length>20?`<div style="padding:10px;color:var(--text3);font-size:12px">... e mais ${lista.length-20} resultados.</div>`:''}</div><button class="btn-cancelar" onclick="document.getElementById('modal-seletor-cep').remove()">Fechar</button></div>`;
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
 }
 
-function limparForm() {
-  ['form-id','f-razao','f-fantasia','f-cnpj','f-email','f-telefone','f-endereco','f-cep'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('f-estado').value = '';
-  document.getElementById('f-cidade').innerHTML = '<option value="">Selecione o estado</option>';
-  document.getElementById('f-cidade').disabled = true;
-  document.getElementById('f-status').value = 'ativo';
+async function selecionarCep(cep,bairro){
+  const el=document.getElementById('f-cep');el.value=cep;mascaraCep(el);
+  if(bairro&&!document.getElementById('f-bairro').value)document.getElementById('f-bairro').value=bairro;
+  document.getElementById('modal-seletor-cep')?.remove();
+  await buscarCep(cep);
 }
 
-async function salvarFornecedor() {
-  const razao  = document.getElementById('f-razao').value.trim();
-  if (!razao) { mostrarToast('Informe a razão social.', 'erro'); return; }
+function renderPix(lista){
+  _pixLista=lista||[];
+  const el=document.getElementById('pix-lista');
+  if(!_pixLista.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:8px 0">Nenhuma chave PIX cadastrada.</div>';return;}
+  el.innerHTML=_pixLista.map((p,i)=>`<div class="pix-item"><select onchange="_pixLista[${i}].tipo=this.value">${['CPF/CNPJ','E-mail','Telefone','Aleatória'].map(t=>`<option value="${t}" ${p.tipo===t?'selected':''}>${t}</option>`).join('')}</select><input type="text" value="${p.chave||''}" placeholder="Chave PIX" oninput="_pixLista[${i}].chave=this.value"/><button class="btn-rm" onclick="_pixLista.splice(${i},1);renderPix(_pixLista)">✕</button></div>`).join('');
+}
 
-  const dados = {
-    razao_social:  razao,
-    nome_fantasia: document.getElementById('f-fantasia').value.trim() || null,
-    cnpj:          document.getElementById('f-cnpj').value.trim() || null,
-    email:         document.getElementById('f-email').value.trim() || null,
-    telefone:      document.getElementById('f-telefone').value.trim() || null,
-    endereco:      document.getElementById('f-endereco').value.trim() || null,
-    estado:        document.getElementById('f-estado').value || null,
-    cidade:        document.getElementById('f-cidade').value || null,
-    cep:           document.getElementById('f-cep').value.trim() || null,
-    status:        document.getElementById('f-status').value,
-  };
+function addPix(){_pixLista.push({tipo:'CPF/CNPJ',chave:''});renderPix(_pixLista);}
 
-  const btn = document.getElementById('btn-salvar-form');
-  btn.disabled = true; btn.textContent = 'Salvando...';
+async function salvar(){
+  const cpfCnpj=(document.getElementById('f-cpf-cnpj').value||'').replace(/\D/g,'');
+  const razao=document.getElementById('f-razao').value.trim();
+  if(!cpfCnpj){alertaModal('Informe o CNPJ/CPF.');return;}
+  if(!razao){alertaModal('Informe a razão social / nome.');return;}
+  const dados={tipo_pessoa:_tipo,cpf_cnpj:cpfCnpj,razao_social:razao,nome_fantasia:g('f-fantasia')||null,situacao_rf:g('f-situacao-rf')||null,natureza_jur:g('f-natureza-jur')||null,porte:g('f-porte')||null,cnae_principal:g('f-cnae')||null,cnaes_secundarios:g('f-cnaes-sec')||null,logradouro:g('f-logradouro')||null,numero:g('f-numero')||null,complemento:g('f-complemento')||null,bairro:g('f-bairro')||null,estado:document.getElementById('f-estado').value||null,cidade:document.getElementById('f-cidade').value||null,cep:g('f-cep')||null,email:g('f-email')||null,telefone:g('f-telefone')||null,observacoes:g('f-observacoes')||null,banco_nome:g('f-banco-nome')||null,banco_agencia:g('f-banco-agencia')||null,banco_conta:g('f-banco-conta')||null,banco_tipo:document.getElementById('f-banco-tipo').value||null,banco_titular:g('f-banco-titular')||null,banco_titular_doc:g('f-banco-titular-doc')||null,banco_obs:g('f-banco-obs')||null,pix_chaves:_pixLista.length?_pixLista:null};
+  const btn=document.getElementById('btn-salvar');btn.disabled=true;btn.textContent='Salvando...';
+  let error,savedId;
+  if(fornecedorEditando){({error}=await sb.from('fornecedores').update({...dados,editado_por:sessao.user.id}).eq('id',fornecedorEditando));savedId=fornecedorEditando;}
+  else{const {data,error:err}=await sb.from('fornecedores').insert({...dados,criado_por:sessao.user.id}).select('id').single();error=err;savedId=data?.id;}
+  btn.disabled=false;btn.textContent='Salvar fornecedor';
+  if(error){alertaModal('Erro ao salvar: '+error.message);return;}
+  if(_sociosTemp.length&&savedId&&!fornecedorEditando){
+    await Promise.all(_sociosTemp.map(s=>sb.from('fornecedor_socios').insert({fornecedor_id:savedId,nome:s.nome||'',qualificacao:s.qualificacao||'',cpf_cnpj_socio:s.cpf_cnpj_socio||'',criado_por:sessao.user.id})));
+    _sociosTemp=[];
+  }
+  toast(fornecedorEditando?'Fornecedor atualizado!':'Fornecedor cadastrado!','sucesso');
+  fecharDrawer();await carregar();
+}
 
+function g(id){return(document.getElementById(id)?.value||'').trim();}
+
+async function recarregarSocios(){
+  if(!fornecedorEditando)return;
+  const {data}=await sb.from('fornecedor_socios').select('*').eq('fornecedor_id',fornecedorEditando).order('nome');
+  const lista=data||[];
+  if(!lista.length){document.getElementById('socios-lista').innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">Nenhum sócio cadastrado.</div>';return;}
+  document.getElementById('socios-lista').innerHTML=`<table class="mtable"><thead><tr><th>Nome</th><th>Qualificação</th><th>CPF/CNPJ</th><th></th></tr></thead><tbody>${lista.map(s=>`<tr><td>${s.nome}</td><td class="td2">${s.qualificacao||''}</td><td class="td2">${s.cpf_cnpj_socio||''}</td><td><button class="btn-icon danger" onclick="excluirSocio('${s.id}')">Excluir</button></td></tr>`).join('')}</tbody></table>`;
+}
+
+function renderSociosTemp(socios){
+  document.getElementById('socios-lista').innerHTML=`<table class="mtable"><thead><tr><th>Nome</th><th>Qualificação</th><th>CPF/CNPJ</th></tr></thead><tbody>${socios.map(s=>`<tr><td>${s.nome||''}</td><td class="td2">${s.qualificacao||''}</td><td class="td2">${s.cpf_cnpj_socio||''}</td></tr>`).join('')}</tbody></table><div style="font-size:11px;color:var(--text3);margin-top:6px">* Serão salvos ao salvar o fornecedor.</div>`;
+}
+
+function abrirModalSocio(){
+  if(!fornecedorEditando){alertaModal('Salve o fornecedor primeiro.');return;}
+  document.getElementById('socio-id').value='';
+  document.getElementById('socio-nome').value='';
+  document.getElementById('socio-qualificacao').value='';
+  document.getElementById('socio-cpf-cnpj').value='';
+  document.getElementById('modal-socio').classList.add('aberto');
+}
+function fecharModalSocio(){document.getElementById('modal-socio').classList.remove('aberto');}
+
+async function salvarSocio(){
+  const nome=document.getElementById('socio-nome').value.trim();
+  if(!nome){alert('Informe o nome.');return;}
+  const {error}=await sb.from('fornecedor_socios').insert({fornecedor_id:fornecedorEditando,nome,qualificacao:document.getElementById('socio-qualificacao').value.trim()||null,cpf_cnpj_socio:document.getElementById('socio-cpf-cnpj').value.trim()||null,criado_por:sessao.user.id});
+  if(error){alert('Erro: '+error.message);return;}
+  toast('Sócio adicionado!','sucesso');fecharModalSocio();await recarregarSocios();
+}
+
+async function excluirSocio(id){
+  if(!confirm('Remover sócio?'))return;
+  await sb.from('fornecedor_socios').delete().eq('id',id);
+  await recarregarSocios();
+}
+
+async function recarregarContatos(){
+  if(!fornecedorEditando)return;
+  const {data}=await sb.from('fornecedor_contatos').select('*').eq('fornecedor_id',fornecedorEditando).order('nome');
+  const lista=data||[];
+  if(!lista.length){document.getElementById('contatos-lista').innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">Nenhum contato cadastrado.</div>';return;}
+  document.getElementById('contatos-lista').innerHTML=`<table class="mtable"><thead><tr><th>Nome</th><th>Cargo</th><th>Telefone</th><th>E-mail</th><th></th></tr></thead><tbody>${lista.map(c=>`<tr><td>${c.nome}${c.principal?' <span style="color:var(--warning);font-size:10px">★</span>':''}</td><td class="td2">${c.cargo||''}</td><td class="td2">${c.telefone||''}</td><td class="td2">${c.email||''}</td><td><button class="btn-icon" onclick="editarContato('${c.id}')">Editar</button><button class="btn-icon danger" onclick="excluirContato('${c.id}')">Excluir</button></td></tr>`).join('')}</tbody></table>`;
+}
+
+function abrirModalContato(){
+  if(!fornecedorEditando){alertaModal('Salve o fornecedor primeiro.');return;}
+  ['contato-id','contato-nome','contato-cargo','contato-telefone','contato-email','contato-descricao'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('contato-principal').checked=false;
+  document.getElementById('modal-contato').classList.add('aberto');
+}
+
+async function editarContato(id){
+  const {data}=await sb.from('fornecedor_contatos').select('*').eq('id',id).single();
+  if(!data)return;
+  document.getElementById('contato-id').value=data.id;
+  document.getElementById('contato-nome').value=data.nome||'';
+  document.getElementById('contato-cargo').value=data.cargo||'';
+  document.getElementById('contato-telefone').value=data.telefone||'';
+  document.getElementById('contato-email').value=data.email||'';
+  document.getElementById('contato-descricao').value=data.descricao||'';
+  document.getElementById('contato-principal').checked=data.principal||false;
+  document.getElementById('modal-contato').classList.add('aberto');
+}
+
+function fecharModalContato(){document.getElementById('modal-contato').classList.remove('aberto');}
+
+async function salvarContato(){
+  const nome=document.getElementById('contato-nome').value.trim();
+  if(!nome){alert('Informe o nome do contato.');return;}
+  const id=document.getElementById('contato-id').value;
+  const dados={fornecedor_id:fornecedorEditando,nome,cargo:document.getElementById('contato-cargo').value.trim()||null,telefone:document.getElementById('contato-telefone').value.trim()||null,email:document.getElementById('contato-email').value.trim()||null,descricao:document.getElementById('contato-descricao').value.trim()||null,principal:document.getElementById('contato-principal').checked};
   let error;
-  if (fornecedorEditando) {
-    ({ error } = await sb.from('fornecedores').update({
-      ...dados, editado_por: sessao.user.id
-    }).eq('id', fornecedorEditando.id));
-  } else {
-    ({ error } = await sb.from('fornecedores').insert({
-      ...dados, criado_por: sessao.user.id
-    }));
-  }
-
-  btn.disabled = false;
-  btn.textContent = fornecedorEditando ? 'Salvar alterações' : 'Salvar';
-
-  if (error) { mostrarToast('Erro ao salvar: ' + error.message, 'erro'); return; }
-
-  mostrarToast(fornecedorEditando ? 'Fornecedor atualizado!' : 'Fornecedor cadastrado!', 'sucesso');
-  fecharForm();
-  await carregarFornecedores();
+  if(id){({error}=await sb.from('fornecedor_contatos').update({...dados,editado_por:sessao.user.id}).eq('id',id));}
+  else{({error}=await sb.from('fornecedor_contatos').insert({...dados,criado_por:sessao.user.id}));}
+  if(error){alert('Erro: '+error.message);return;}
+  toast('Contato salvo!','sucesso');fecharModalContato();await recarregarContatos();
 }
 
-// ══════════════════════════════════════════
-// DETALHES
-// ══════════════════════════════════════════
-function abrirDetalhes(id) {
-  const f = fornecedores.find(x => x.id === id);
-  if (!f) return;
-
-  document.getElementById('modal-nome').textContent = f.razao_social;
-  document.getElementById('modal-btn-editar').onclick = () => abrirFormEditar(id);
-
-  const campos = [
-    ['Nome fantasia', f.nome_fantasia],
-    ['CNPJ', f.cnpj],
-    ['E-mail', f.email],
-    ['Telefone', f.telefone],
-    ['Endereço', f.endereco],
-    ['Cidade', f.cidade],
-    ['Estado', f.estado],
-    ['CEP', f.cep],
-    ['Status', f.status],
-  ];
-
-  document.getElementById('modal-body').innerHTML = campos
-    .filter(([, v]) => v)
-    .map(([l, v]) => `
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-        <span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">${l}</span>
-        <span style="font-size:13px;font-weight:500">${v}</span>
-      </div>
-    `).join('');
-
-  const criadoPor = f.criado_por_usr?.nome || '—';
-  const editadoPor = f.editado_por_usr?.nome;
-  document.getElementById('modal-audit').innerHTML = `
-    Criado por <strong>${criadoPor}</strong> em ${formatarData(f.criado_em)}
-    ${editadoPor ? `<br>Última edição por <strong>${editadoPor}</strong> em ${formatarData(f.editado_em)}` : ''}
-  `;
-
-  document.getElementById('modal-detalhes').classList.add('aberto');
+async function excluirContato(id){
+  if(!confirm('Remover contato?'))return;
+  await sb.from('fornecedor_contatos').delete().eq('id',id);
+  await recarregarContatos();
 }
 
-function fecharModalDetalhes() {
-  document.getElementById('modal-detalhes').classList.remove('aberto');
-}
-
-document.getElementById('modal-detalhes').addEventListener('click', function(e) {
-  if (e.target === this) fecharModalDetalhes();
-});
-
-// ══════════════════════════════════════════
-// FILTRO
-// ══════════════════════════════════════════
-function filtrarTabela() {
-  const q = document.getElementById('busca').value.toLowerCase();
-  const filtrados = fornecedores.filter(f =>
-    (f.razao_social || '').toLowerCase().includes(q) ||
-    (f.cnpj || '').toLowerCase().includes(q) ||
-    (f.cidade || '').toLowerCase().includes(q) ||
-    (f.nome_fantasia || '').toLowerCase().includes(q)
-  );
-  renderizarTabela(filtrados);
-}
-
-// ══════════════════════════════════════════
-// IBGE
-// ══════════════════════════════════════════
-async function carregarCidades(selEstadoId, selCidadeId, cidadeAtual = '') {
-  const uf  = document.getElementById(selEstadoId).value;
-  const sel = document.getElementById(selCidadeId);
-  sel.innerHTML = '<option value="">Carregando...</option>';
-  sel.disabled = true;
-  if (!uf) { sel.innerHTML = '<option value="">Selecione o estado</option>'; return; }
-  try {
-    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
-    const cidades = await r.json();
-    sel.innerHTML = '<option value="">Selecione a cidade</option>';
-    cidades.forEach(c => {
-      const o = document.createElement('option');
-      o.value = o.textContent = c.nome;
-      if (c.nome === cidadeAtual) o.selected = true;
+async function carregarCidades(selEstadoId,selCidadeId,cidadeAtual=''){
+  const uf=document.getElementById(selEstadoId).value;
+  const sel=document.getElementById(selCidadeId);
+  sel.innerHTML='<option value="">Carregando...</option>';sel.disabled=true;
+  if(!uf){sel.innerHTML='<option value="">Selecione o estado primeiro</option>';return;}
+  try{
+    const r=await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+    const cidades=await r.json();
+    sel.innerHTML='<option value="">Selecione a cidade</option>';
+    cidades.forEach(c=>{
+      const o=document.createElement('option');o.value=o.textContent=c.nome;
+      if(c.nome===cidadeAtual)o.selected=true;
+      else{const n=c.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');const a=cidadeAtual.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(n===a)o.selected=true;}
       sel.appendChild(o);
     });
-    sel.disabled = false;
-  } catch {
-    sel.innerHTML = '<option value="">Erro ao carregar</option>';
-  }
+    sel.disabled=false;
+  }catch{sel.innerHTML='<option value="">Erro ao carregar</option>';}
 }
 
-// ══════════════════════════════════════════
-// MÁSCARAS
-// ══════════════════════════════════════════
-function mascararCnpj(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 14);
-  if (v.length > 12) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
-  else if (v.length > 8) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d+)$/, '$1.$2.$3/$4');
-  else if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d+)$/, '$1.$2.$3');
-  else if (v.length > 2) v = v.replace(/^(\d{2})(\d+)$/, '$1.$2');
-  el.value = v;
+function mascaraDoc(el){
+  let v=el.value.replace(/\D/g,'');
+  if(_tipo==='PJ'){v=v.slice(0,14);v=v.replace(/^(\d{2})(\d)/,'$1.$2');v=v.replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3');v=v.replace(/\.(\d{3})(\d)/,'.$1/$2');v=v.replace(/(\d{4})(\d)/,'$1-$2');}
+  else{v=v.slice(0,11);v=v.replace(/^(\d{3})(\d)/,'$1.$2');v=v.replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3');v=v.replace(/\.(\d{3})(\d)/,'.$1-$2');}
+  el.value=v;
 }
 
-function mascararTelefone(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 11);
-  if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
-  else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4})(\d+)$/, '($1) $2-$3');
-  else if (v.length > 2) v = v.replace(/^(\d{2})(\d+)$/, '($1) $2');
-  el.value = v;
+function mascaraCep(el){let v=el.value.replace(/\D/g,'').slice(0,8);if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5);el.value=v;}
+
+function mascaraDocStr(doc,tipo){
+  if(!doc)return'—';
+  if(tipo==='PF'||doc.length<=11)return doc.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4');
+  return doc.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
 }
 
-function mascararCep(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 8);
-  if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5);
-  el.value = v;
-}
+function alertaModal(msg){const el=document.getElementById('alerta-modal');el.textContent=msg;el.classList.add('visivel');setTimeout(()=>el.classList.remove('visivel'),5000);}
 
-// ══════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════
-function formatarData(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-function mostrarToast(msg, tipo = 'sucesso') {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${tipo}`;
-  toast.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${tipo === 'sucesso' ? '#2ECC8A' : '#E05555'}" stroke-width="2">
-      ${tipo === 'sucesso' ? '<polyline points="20 6 9 17 4 12"/>' : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
-    </svg>
-    ${msg}`;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 4000);
+function toast(msg,tipo='sucesso'){
+  const c=document.getElementById('toast-container');const t=document.createElement('div');
+  t.className=`toast ${tipo}`;
+  t.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${tipo==='sucesso'?'#2ECC8A':'#E05555'}" stroke-width="2">${tipo==='sucesso'?'<polyline points="20 6 9 17 4 12"/>':'<circle cx="12" cy="12" r="10"/>'}</svg>${msg}`;
+  c.appendChild(t);setTimeout(()=>t.remove(),4000);
 }
 </script>
 </body>
