@@ -1269,6 +1269,8 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 let sessaoUsuario = null;
 let dadosUsuario  = null;
 let obraAtiva     = null;
+let _cacheObras = [];
+let _cacheUsuarios = [];
 
 // ══════════════════════════════════════════
 // MÓDULOS DO SISTEMA
@@ -1605,19 +1607,20 @@ async function salvarObra() {
 
 async function carregarTabelaObras() {
   const { data: obras } = await sb.from('obras').select('*').order('nome');
+  _cacheObras = obras || [];
   const tbody = document.getElementById('tbody-obras');
-  if (!obras?.length) {
+  if (!_cacheObras.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px">Nenhuma obra cadastrada.</td></tr>';
     return;
   }
-  tbody.innerHTML = obras.map(o => `
+  tbody.innerHTML = _cacheObras.map(o => `
     <tr>
       <td>${o.nome}</td>
       <td style="color:var(--text2)">${o.codigo || '—'}</td>
       <td style="color:var(--text2)">${[o.cidade, o.estado].filter(Boolean).join(' / ') || '—'}</td>
       <td><span class="badge badge-${o.status === 'ativa' ? 'ativo' : 'inativo'}">${o.status}</span></td>
       <td>
-        <button class="btn-icon" onclick="abrirModalEditarObra(${JSON.stringify(o).replace(/"/g,'&quot;')})">Editar</button>
+        <button class="btn-icon" onclick="abrirModalEditarObraId('${o.id}')">Editar</button>
         <button class="btn-icon danger" onclick="desativarObra('${o.id}','${o.status}')">
           ${o.status === 'ativa' ? 'Desativar' : 'Ativar'}
         </button>
@@ -1700,6 +1703,7 @@ async function carregarTabelaUsuarios() {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px">Nenhum usuário cadastrado.</td></tr>';
     return;
   }
+  _cacheUsuarios = usuarios;
   tbody.innerHTML = usuarios.map(u => `
     <tr>
       <td>${u.nome}</td>
@@ -1707,7 +1711,7 @@ async function carregarTabelaUsuarios() {
       <td><span class="badge badge-${u.perfis?.nome || 'operador'}">${u.perfis?.nome || '—'}</span></td>
       <td><span class="badge badge-${u.ativo ? 'ativo' : 'inativo'}">${u.ativo ? 'ativo' : 'inativo'}</span></td>
       <td>
-        <button class="btn-icon" onclick="abrirModalEditarUsuario(${JSON.stringify(u).replace(/"/g,'&quot;')})">Editar</button>
+        <button class="btn-icon" onclick="abrirModalEditarUsuarioId('${u.id}')">Editar</button>
         <button class="btn-icon danger" onclick="toggleUsuario('${u.id}',${u.ativo})">
           ${u.ativo ? 'Desativar' : 'Ativar'}
         </button>
@@ -1834,6 +1838,11 @@ function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 // ══════════════════════════════════════════
 // EDITAR OBRA
 // ══════════════════════════════════════════
+function abrirModalEditarObraId(id) {
+  const obra = _cacheObras.find(o => o.id === id);
+  if (obra) abrirModalEditarObra(obra);
+}
+
 async function abrirModalEditarObra(obra) {
   document.getElementById('edit-obra-id').value     = obra.id;
   document.getElementById('edit-obra-nome').value   = obra.nome || '';
@@ -1870,6 +1879,11 @@ async function confirmarEditarObra() {
 // ══════════════════════════════════════════
 // EDITAR USUÁRIO
 // ══════════════════════════════════════════
+function abrirModalEditarUsuarioId(id) {
+  const usuario = _cacheUsuarios.find(u => u.id === id);
+  if (usuario) abrirModalEditarUsuario(usuario);
+}
+
 async function abrirModalEditarUsuario(usuario) {
   document.getElementById('edit-usr-id').value    = usuario.id;
   document.getElementById('edit-usr-nome').value  = usuario.nome || '';
