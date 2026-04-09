@@ -1516,9 +1516,30 @@ function mostrarModulos() {
   `).join('');
 }
 
+const MODULO_URLS = {
+  'cadastro_fornecedor': 'fornecedores.html',
+  'solicitacao_contratos': 'solicitacoes.html',
+  'elaboracao_contratos': 'elaboracao-contratos.html',
+  'gestao_contratos': 'gestao-contratos.html',
+  'medicoes': 'medicoes.html',
+  'assinatura_medicoes': 'assinaturas.html',
+  'contas_pagar': 'contas-pagar.html',
+  'status_pagamentos': 'pagamentos.html',
+  'gestao_frota': 'frota.html',
+  'escaner_diario': 'diario.html',
+  'portal_fornecedor': 'portal-fornecedor.html',
+};
+
 function abrirModulo(id) {
-  const modulo = MODULOS.find(m => m.id === id);
-  mostrarToast(`Módulo "${modulo.nome}" em desenvolvimento.`, 'sucesso');
+  const url = MODULO_URLS[id];
+  if (url && obraAtiva) {
+    window.location.href = `${url}?obra=${obraAtiva.id}`;
+  } else if (url && !obraAtiva) {
+    mostrarToast('Selecione uma obra primeiro.', 'erro');
+  } else {
+    const modulo = MODULOS.find(m => m.id === id);
+    mostrarToast(`Módulo "${modulo.nome}" em desenvolvimento.`, 'sucesso');
+  }
 }
 
 // ══════════════════════════════════════════
