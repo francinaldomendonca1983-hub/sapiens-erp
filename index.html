@@ -796,7 +796,7 @@
     background: rgba(0,0,0,0.6);
     backdrop-filter: blur(4px);
     z-index: 200;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     animation: fadeIn 0.2s ease;
@@ -1206,7 +1206,7 @@
     </div>
 
 <!-- MODAL EDITAR OBRA -->
-<div class="modal-overlay" id="modal-editar-obra" onclick="fecharModal('modal-editar-obra')">
+<div class="modal-overlay" id="modal-editar-obra" style="display:none" onclick="fecharModal('modal-editar-obra')">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>Editar obra</h3>
     <input type="hidden" id="edit-obra-id"/>
@@ -1264,7 +1264,7 @@
 </div>
 
 <!-- MODAL EDITAR USUÁRIO -->
-<div class="modal-overlay" id="modal-editar-usuario" onclick="fecharModal('modal-editar-usuario')">
+<div class="modal-overlay" id="modal-editar-usuario" style="display:none" onclick="fecharModal('modal-editar-usuario')">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>Editar usuário</h3>
     <input type="hidden" id="edit-usr-id"/>
@@ -1446,6 +1446,8 @@ async function fazerLogout() {
   obraAtiva     = null;
   document.getElementById('btn-admin-wrap').style.display = 'none';
   document.getElementById('tela-app').style.display = 'none';
+  document.getElementById('modal-editar-obra').style.display = 'none';
+  document.getElementById('modal-editar-usuario').style.display = 'none';
   document.getElementById('tela-login').style.display = 'flex';
   document.getElementById('input-email').value = '';
   document.getElementById('input-senha').value = '';
