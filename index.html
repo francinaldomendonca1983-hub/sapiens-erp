@@ -985,6 +985,7 @@
         <button class="admin-tab ativo" onclick="trocarAbaAdmin('obras')">Obras</button>
         <button class="admin-tab" onclick="trocarAbaAdmin('usuarios')">Usuários</button>
         <button class="admin-tab" onclick="trocarAbaAdmin('vinculos')">Vínculos</button>
+        <button class="admin-tab" onclick="trocarAbaAdmin('modulos')">Módulos</button>
       </div>
 
       <!-- PAINEL OBRAS -->
@@ -1159,8 +1160,50 @@
           </table>
         </div>
       </div>
-    </div>
 
+      <!-- PAINEL MÓDULOS -->
+      <div id="admin-modulos" class="admin-panel">
+        <div class="admin-form">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Permissões de módulos por usuário
+          </h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Usuário *</label>
+              <select id="mod-usuario" onchange="carregarModulosUsuario()">
+                <option value="">Selecione o usuário...</option>
+              </select>
+            </div>
+          </div>
+          <div id="modulos-checkboxes" style="display:none">
+            <div style="font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:12px">Módulos permitidos</div>
+            <div id="lista-checkboxes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px"></div>
+            <button class="btn-salvar" id="btn-salvar-modulos" onclick="salvarModulos()">Salvar permissões</button>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <h3>Permissões ativas</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Módulos</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-modulos">
+              <tr><td colspan="3" style="text-align:center;color:var(--text3);padding:32px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+    </div>
 
 <!-- MODAL EDITAR OBRA -->
 <div class="modal-overlay" id="modal-editar-obra" onclick="fecharModal('modal-editar-obra')">
@@ -1504,12 +1547,29 @@ function voltarParaObras() {
   mostrarObras();
 }
 
-function mostrarModulos() {
+async function mostrarModulos() {
   document.getElementById('tela-obras').style.display = 'none';
   document.getElementById('tela-modulos').style.display = 'block';
 
   const grid = document.getElementById('modulos-grid');
-  grid.innerHTML = MODULOS.map(m => `
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px"><div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.6s linear infinite;margin:0 auto"></div></div>';
+
+  let modulosVisiveis = MODULOS;
+
+  // Admin vê todos, outros veem só os permitidos
+  if (dadosUsuario?.perfis?.nome !== 'admin') {
+    const { data: permitidos } = await sb.from('usuario_modulos')
+      .select('modulo').eq('usuario_id', sessaoUsuario.user.id);
+    const idsPermitidos = new Set((permitidos || []).map(m => m.modulo));
+    modulosVisiveis = MODULOS.filter(m => idsPermitidos.has(m.id));
+  }
+
+  if (!modulosVisiveis.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text3);font-size:14px">Nenhum módulo disponível para seu usuário.<br>Solicite ao administrador.</div>';
+    return;
+  }
+
+  grid.innerHTML = modulosVisiveis.map(m => `
     <div class="modulo-card fade-in" onclick="abrirModulo('${m.id}')">
       <div class="modulo-icon">${m.icon}</div>
       <h3>${m.nome}</h3>
@@ -1556,6 +1616,8 @@ function mostrarAdmin() {
   carregarTabelaVinculos();
   carregarSelectsPerfis();
   carregarSelectsVinculos();
+  carregarSelectModUsuarios();
+  carregarTabelaModulos();
 }
 
 function voltarDoAdmin() {
@@ -1564,12 +1626,16 @@ function voltarDoAdmin() {
 }
 
 function trocarAbaAdmin(aba) {
+  const abas = ['obras','usuarios','vinculos','modulos'];
   document.querySelectorAll('.admin-tab').forEach((t,i) => {
-    const abas = ['obras','usuarios','vinculos'];
     t.classList.toggle('ativo', abas[i] === aba);
   });
   document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('ativo'));
   document.getElementById('admin-' + aba).classList.add('ativo');
+  if (aba === 'modulos') {
+    carregarSelectModUsuarios();
+    carregarTabelaModulos();
+  }
 }
 
 // ── OBRAS ──
@@ -1918,6 +1984,126 @@ async function confirmarEditarUsuario() {
   mostrarToast('Usuário atualizado com sucesso!', 'sucesso');
   fecharModal('modal-editar-usuario');
   carregarTabelaUsuarios();
+}
+
+// ══════════════════════════════════════════
+// MÓDULOS POR USUÁRIO
+// ══════════════════════════════════════════
+const TODOS_MODULOS = [
+  { id: 'solicitacao_contratos',  nome: 'Solicitação de Contratos' },
+  { id: 'cadastro_fornecedor',    nome: 'Cadastro de Fornecedor' },
+  { id: 'elaboracao_contratos',   nome: 'Elaboração de Contratos' },
+  { id: 'gestao_contratos',       nome: 'Gestão de Contratos' },
+  { id: 'medicoes',               nome: 'Medições' },
+  { id: 'assinatura_medicoes',    nome: 'Assinatura de Medições' },
+  { id: 'contas_pagar',           nome: 'Contas a Pagar' },
+  { id: 'status_pagamentos',      nome: 'Status de Pagamentos' },
+  { id: 'gestao_frota',           nome: 'Gestão de Frota' },
+  { id: 'escaner_diario',         nome: 'Escaner de Diário (IA)' },
+  { id: 'portal_fornecedor',      nome: 'Portal do Fornecedor' },
+];
+
+async function carregarSelectModUsuarios() {
+  const { data: usuarios } = await sb.from('usuarios').select('id, nome').eq('ativo', true).order('nome');
+  const sel = document.getElementById('mod-usuario');
+  if (!sel) return;
+  const valorAtual = sel.value;
+  sel.innerHTML = '<option value="">Selecione o usuário...</option>';
+  (usuarios || []).forEach(u => {
+    sel.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+  });
+  if (valorAtual) sel.value = valorAtual;
+}
+
+async function carregarModulosUsuario() {
+  const usuarioId = document.getElementById('mod-usuario').value;
+  const wrap = document.getElementById('modulos-checkboxes');
+  if (!usuarioId) { wrap.style.display = 'none'; return; }
+
+  const { data: permitidos } = await sb.from('usuario_modulos')
+    .select('modulo').eq('usuario_id', usuarioId);
+
+  const idsPermitidos = new Set((permitidos || []).map(m => m.modulo));
+
+  document.getElementById('lista-checkboxes').innerHTML = TODOS_MODULOS.map(m => `
+    <label style="display:flex;align-items:center;gap:10px;background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor=idsPermitidos&&'var(--border)'">
+      <input type="checkbox" id="chk-${m.id}" value="${m.id}" ${idsPermitidos.has(m.id) ? 'checked' : ''}
+        style="width:16px;height:16px;accent-color:var(--blue);cursor:pointer"/>
+      <span style="font-size:13px;color:var(--text)">${m.nome}</span>
+    </label>
+  `).join('');
+
+  wrap.style.display = 'block';
+}
+
+async function salvarModulos() {
+  const usuarioId = document.getElementById('mod-usuario').value;
+  if (!usuarioId) return;
+
+  const selecionados = TODOS_MODULOS
+    .filter(m => document.getElementById('chk-' + m.id)?.checked)
+    .map(m => m.id);
+
+  const btn = document.getElementById('btn-salvar-modulos');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  // Remove todos os módulos do usuário e reinsere os selecionados
+  await sb.from('usuario_modulos').delete().eq('usuario_id', usuarioId);
+
+  if (selecionados.length > 0) {
+    await sb.from('usuario_modulos').insert(
+      selecionados.map(modulo => ({
+        usuario_id: usuarioId,
+        modulo,
+        criado_por: sessaoUsuario.user.id
+      }))
+    );
+  }
+
+  btn.disabled = false; btn.textContent = 'Salvar permissões';
+  mostrarToast('Permissões salvas!', 'sucesso');
+  carregarTabelaModulos();
+}
+
+async function carregarTabelaModulos() {
+  const tbody = document.getElementById('tbody-modulos');
+  if (!tbody) return;
+
+  const { data: todos } = await sb.from('usuario_modulos')
+    .select('usuario_id, modulo, usuarios!usuario_modulos_usuario_id_fkey(nome)')
+    .order('usuario_id');
+
+  if (!todos?.length) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:32px">Nenhuma permissão configurada.</td></tr>';
+    return;
+  }
+
+  // Agrupar por usuário
+  const agrupado = {};
+  todos.forEach(r => {
+    const uid = r.usuario_id;
+    if (!agrupado[uid]) agrupado[uid] = { nome: r.usuarios?.nome || '—', modulos: [] };
+    agrupado[uid].modulos.push(r.modulo);
+  });
+
+  tbody.innerHTML = Object.entries(agrupado).map(([uid, dados]) => `
+    <tr>
+      <td style="font-weight:500">${dados.nome}</td>
+      <td style="font-size:12px;color:var(--text2)">${dados.modulos.map(m => TODOS_MODULOS.find(x => x.id === m)?.nome || m).join(', ')}</td>
+      <td>
+        <button class="btn-icon" onclick="editarModulosUsuario('${uid}')">Editar</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function editarModulosUsuario(uid) {
+  trocarAbaAdmin('modulos');
+  setTimeout(async () => {
+    document.getElementById('mod-usuario').value = uid;
+    await carregarModulosUsuario();
+    document.getElementById('modulos-checkboxes').scrollIntoView({ behavior: 'smooth' });
+  }, 100);
 }
 
 function mostrarErroLogin(msg) {
