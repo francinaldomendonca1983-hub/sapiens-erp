@@ -478,6 +478,8 @@ const TIPOS_DOC_PF=[
   {id:'comprovante_endereco',label:'Comprovante Endereço'},
   {id:'outro',label:'Outro'},
 ];
+// Atualiza título e tipos ao trocar PJ/PF
+const _setTipoOriginal=setTipo;
 
 window.addEventListener('DOMContentLoaded',async()=>{
   const {data:{session}}=await sb.auth.getSession();
@@ -601,6 +603,10 @@ function setTipo(tipo){
   document.getElementById('f-cpf-cnpj').maxLength=tipo==='PJ'?18:14;
   ['g-fantasia','g-pj-fields','g-cnae','tab-btn-socios'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=tipo==='PJ'?'':'none';});
   document.getElementById('btn-consultar').style.display=tipo==='PJ'?'':'none';
+  // Atualiza título e tipos de documento dinamicamente
+  const secTitulo=document.getElementById('docs-sec-titulo');
+  if(secTitulo)secTitulo.textContent=tipo==='PJ'?'DOCUMENTOS DA EMPRESA':'DOCUMENTOS PESSOAIS';
+  renderTiposDoc();
 }
 
 function mudarTab(nome,btn){
@@ -732,7 +738,22 @@ async function recarregarSocios(){
   const {data}=await sb.from('fornecedor_socios').select('*').eq('fornecedor_id',fornecedorEditando).order('nome');
   const lista=data||[];
   if(!lista.length){document.getElementById('socios-lista').innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">Nenhum sócio cadastrado.</div>';return;}
-  document.getElementById('socios-lista').innerHTML=`<table class="mtable"><thead><tr><th>Nome</th><th>Qualificação</th><th>CPF/CNPJ</th><th></th></tr></thead><tbody>${lista.map(s=>`<tr><td>${s.nome}</td><td class="td2">${s.qualificacao||''}</td><td class="td2">${s.cpf_cnpj_socio||''}</td><td><button class="btn-icon danger" onclick="excluirSocio('${s.id}')">Excluir</button></td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('socios-lista').innerHTML=
+    '<table class="mtable"><thead><tr><th>Nome</th><th>Qualificação</th><th>CPF/CNPJ</th><th>Docs</th><th></th></tr></thead><tbody>' +
+    lista.map(s=>
+      '<tr>' +
+      '<td>'+s.nome+'</td>' +
+      '<td class="td2">'+(s.qualificacao||'')+'</td>' +
+      '<td class="td2">'+(s.cpf_cnpj_socio||'')+'</td>' +
+      '<td><label style="cursor:pointer;color:var(--blue2);font-size:12px" title="Anexar doc">📎<input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="uploadDocumentoSocio(\''+s.id+'\',\''+s.nome.replace(/'/g,"\\'")+'\',this.files[0])"/></label></td>' +
+      '<td><button class="btn-icon danger" onclick="excluirSocio(\''+s.id+'\')">Excluir</button></td>' +
+      '</tr>' +
+      '<tr id="socio-docs-row-'+s.id+'">' +
+      '<td colspan="5" style="padding:2px 0 10px 12px"><div id="socio-docs-'+s.id+'" style="font-size:12px;color:var(--text3)">—</div></td>' +
+      '</tr>'
+    ).join('') +
+    '</tbody></table>';
+  lista.forEach(s=>carregarDocsSocio(s.id));
 }
 
 function renderSociosTemp(socios){
@@ -761,6 +782,41 @@ async function excluirSocio(id){
   if(!confirm('Remover sócio?'))return;
   await sb.from('fornecedor_socios').delete().eq('id',id);
   await recarregarSocios();
+}
+
+async function carregarDocsSocio(socioId){
+  const wrap=document.getElementById('socio-docs-'+socioId);
+  if(!wrap)return;
+  const {data}=await sb.from('documentos').select('*').eq('registro_id',socioId).eq('modulo','socio').eq('ativo',true).order('criado_em',{ascending:false});
+  const lista=data||[];
+  if(!lista.length){wrap.innerHTML='<span style="color:var(--text3)">Nenhum documento.</span>';return;}
+  wrap.innerHTML=lista.map(d=>
+    '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;margin-bottom:4px">'+
+    '<span>📎 '+d.nome_arquivo+'</span>'+
+    '<a href="'+d.drive_url+'" target="_blank" class="btn-icon" style="padding:2px 7px;font-size:11px">Ver</a>'+
+    '<a href="'+d.download_url+'" target="_blank" class="btn-icon" style="padding:2px 7px;font-size:11px">⬇</a>'+
+    '</span>'
+  ).join('');
+}
+
+async function uploadDocumentoSocio(socioId,socioNome,file){
+  if(!file)return;
+  if(file.size>10*1024*1024){toast('Arquivo muito grande. Máximo 10MB.','erro');return;}
+  toast('Enviando documento do sócio...','sucesso');
+  try{
+    const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+    const token=btoa(sessao.user.id+':'+Date.now()+':sapiens');
+    const forn=fornecedores.find(x=>x.id===fornecedorEditando);
+    const subpasta=(forn?.razao_social||fornecedorEditando).substring(0,60).trim()+'/Socios';
+    const resp=await fetch(DRIVE_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({acao:'drive.upload',token,modulo:'Fornecedores',subpasta,nomeArquivo:file.name,mimeType:file.type,base64,idRegistro:socioId,enviadoPor:sessao.user.id})
+    });
+    const resultado=await resp.json();
+    if(!resultado.sucesso)throw new Error(resultado.erro||'Erro no upload');
+    await sb.from('documentos').insert({modulo:'socio',registro_id:socioId,tipo:'outro',descricao:'Doc sócio: '+socioNome,nome_arquivo:file.name,mime_type:file.type,tamanho_bytes:file.size,drive_id:resultado.dados.driveId,drive_url:resultado.dados.driveUrl,download_url:resultado.dados.downloadUrl,versao:1,criado_por:sessao.user.id});
+    toast('Documento do sócio enviado!','sucesso');
+    await carregarDocsSocio(socioId);
+  }catch(err){toast('Erro: '+err.message,'erro');}
 }
 
 async function recarregarContatos(){
@@ -856,8 +912,9 @@ async function uploadDocumento(file){
     // Gera token simples para o GAS
     const token=btoa(`${sessao.user.id}:${Date.now()}:sapiens`);
 
-    // Envia para o GAS Drive
-    const subpasta=fornecedorEditando;
+    // Usa razão social como nome da subpasta (mais legível no Drive)
+    const forn=fornecedores.find(x=>x.id===fornecedorEditando);
+    const subpasta=(forn?.razao_social||fornecedorEditando).substring(0,60).trim();
     const resp=await fetch(DRIVE_GAS_URL,{
       method:'POST',
       headers:{'Content-Type':'text/plain'},
