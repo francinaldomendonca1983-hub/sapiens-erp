@@ -452,6 +452,12 @@ tbody tr:hover td{background:rgba(46,123,196,0.04);}
 const SUPABASE_URL='https://yoslcgwpboggofeubtqk.supabase.co';
 const SUPABASE_KEY='sb_publishable_SslKwCxg51q9N_hZbbS6Uw_FcBOEhnU';
 const DRIVE_GAS_URL='https://script.google.com/macros/s/AKfycbySWIpceHVwBEQ3Yf7UTjkc27fI4DQa4DR6eo8GjP4Qth6MMcP1BcAj-V5GbRw8Qsg/exec';
+
+// Gera URL segura para ver ou baixar arquivo via GAS (sem exposição pública)
+function urlSegura(driveId, tipo) {
+  const token = btoa(sessao.user.id + ':' + Date.now() + ':sapiens');
+  return DRIVE_GAS_URL + '?acao=' + tipo + '&driveId=' + driveId + '&token=' + token;
+}
 const {createClient}=supabase;
 const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
 let sessao=null,obraId=null,fornecedores=[],fornecedorEditando=null;
@@ -793,8 +799,8 @@ async function carregarDocsSocio(socioId){
   wrap.innerHTML=lista.map(d=>
     '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;margin-bottom:4px">'+
     '<span>📎 '+d.nome_arquivo+'</span>'+
-    '<a href="'+d.drive_url+'" target="_blank" class="btn-icon" style="padding:2px 7px;font-size:11px">Ver</a>'+
-    '<a href="'+d.download_url+'" target="_blank" class="btn-icon" style="padding:2px 7px;font-size:11px">⬇</a>'+
+    '<a href="'+urlSegura(d.drive_id,'ver')+'" target="_blank" class="btn-icon" style="padding:2px 7px;font-size:11px">Ver</a>'+
+    '<a href="'+urlSegura(d.drive_id,'baixar')+'" target="_blank" class="btn-icon" style="padding:2px 7px;font-size:11px">⬇</a>'+
     '</span>'
   ).join('');
 }
@@ -990,8 +996,8 @@ async function recarregarDocumentos(){
         ${d.descricao?`<div style="font-size:11px;color:var(--text2);margin-top:2px">${d.descricao}</div>`:''}
       </div>
       <div class="doc-actions">
-        <a href="${d.drive_url}" target="_blank" class="btn-icon" title="Visualizar">👁</a>
-        <a href="${d.download_url}" target="_blank" class="btn-icon" title="Baixar">⬇</a>
+        <a href="${urlSegura(d.drive_id,'ver')}" target="_blank" class="btn-icon" title="Visualizar">👁</a>
+        <a href="${urlSegura(d.drive_id,'baixar')}" target="_blank" class="btn-icon" title="Baixar">⬇</a>
         <button class="btn-icon danger" onclick="excluirDocumento('${d.id}','${d.drive_id}')" title="Excluir">✕</button>
       </div>
     </div>
@@ -1110,8 +1116,8 @@ async function carregarDocsAtivo(ativoId){
         <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.nome_arquivo}</div>
         <span class="doc-tipo-badge">${tipoDocLabel(d.tipo)}</span>
       </div>
-      <a href="${d.drive_url}" target="_blank" class="btn-icon" style="font-size:11px">Ver</a>
-      <a href="${d.download_url}" target="_blank" class="btn-icon" style="font-size:11px">⬇</a>
+      <a href="${urlSegura(d.drive_id,'ver')}" target="_blank" class="btn-icon" style="font-size:11px">Ver</a>
+      <a href="${urlSegura(d.drive_id,'baixar')}" target="_blank" class="btn-icon" style="font-size:11px">⬇</a>
     </div>
   `).join('');
 }
