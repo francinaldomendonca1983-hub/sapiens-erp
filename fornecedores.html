@@ -132,6 +132,36 @@ tbody tr:hover td{background:rgba(46,123,196,0.04);}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 .fade-in{animation:fadeIn 0.3s ease;}
+/* DOCUMENTOS */
+.doc-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--navy);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;transition:border-color 0.2s;}
+.doc-item:hover{border-color:var(--border2);}
+.doc-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(46,123,196,0.12);border:1px solid var(--border2);}
+.doc-info{flex:1;min-width:0;}
+.doc-nome{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.doc-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.doc-actions{display:flex;gap:6px;flex-shrink:0;}
+.doc-tipo-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:500;background:rgba(46,123,196,0.12);color:var(--blue2);border:1px solid var(--border);margin-top:4px;}
+/* UPLOAD AREA */
+.upload-area{border:2px dashed var(--border2);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--navy);margin-bottom:12px;}
+.upload-area:hover,.upload-area.drag{border-color:var(--blue);background:rgba(46,123,196,0.06);}
+.upload-area svg{width:32px;height:32px;stroke:var(--text3);fill:none;margin-bottom:8px;}
+.upload-area p{font-size:13px;color:var(--text3);}
+.upload-area span{font-size:11px;color:var(--text3);display:block;margin-top:4px;}
+.upload-progress{height:4px;background:var(--border);border-radius:4px;margin-top:8px;overflow:hidden;display:none;}
+.upload-progress-bar{height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;}
+/* TIPO SELECT */
+.tipo-doc-select{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px;}
+.tipo-doc-opt{padding:8px 12px;background:var(--navy);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;color:var(--text2);transition:all 0.2s;text-align:center;}
+.tipo-doc-opt:hover,.tipo-doc-opt.sel{border-color:var(--blue);color:var(--blue2);background:rgba(46,123,196,0.08);}
+/* ATIVOS */
+.ativo-card{background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;transition:border-color 0.2s;}
+.ativo-card:hover{border-color:var(--border2);}
+.ativo-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.ativo-card-titulo{font-size:13px;font-weight:600;color:var(--text);}
+.ativo-card-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.ativo-docs-toggle{font-size:11px;color:var(--blue2);cursor:pointer;background:transparent;border:none;padding:0;}
+.ativo-docs-wrap{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.ativo-docs-wrap.aberto{display:block;}
 </style>
 </head>
 <body>
@@ -186,6 +216,8 @@ tbody tr:hover td{background:rgba(46,123,196,0.04);}
         <button class="tab-btn" onclick="mudarTab('socios',this)" id="tab-btn-socios">Sócios / QSA</button>
         <button class="tab-btn" onclick="mudarTab('contatos',this)">Contatos</button>
         <button class="tab-btn" onclick="mudarTab('bancarios',this)">Dados bancários</button>
+        <button class="tab-btn" onclick="mudarTab('documentos',this)" id="tab-btn-documentos">Documentos</button>
+        <button class="tab-btn" onclick="mudarTab('ativos',this)">Ativos</button>
       </div>
 
       <!-- TAB DADOS -->
@@ -298,6 +330,73 @@ tbody tr:hover td{background:rgba(46,123,196,0.04);}
           <div class="fg"><textarea id="f-banco-obs" rows="2" placeholder="Informações adicionais sobre pagamento..."></textarea></div>
         </div>
       </div>
+
+      <!-- TAB DOCUMENTOS -->
+      <div id="tab-documentos" class="tab-panel">
+        <div id="docs-aviso-salvar" style="text-align:center;padding:24px;color:var(--text3);font-size:13px">
+          Salve o fornecedor primeiro para anexar documentos.
+        </div>
+        <div id="docs-conteudo" style="display:none">
+          <div class="fsec">
+            <div class="fsec-title" id="docs-sec-titulo">DOCUMENTOS DA EMPRESA</div>
+
+            <!-- Seletor de tipo -->
+            <div style="margin-bottom:12px">
+              <label style="font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:8px">Tipo de documento</label>
+              <div class="tipo-doc-select" id="tipo-doc-select"></div>
+              <div class="fg" style="margin-top:8px">
+                <label>Descrição (opcional)</label>
+                <input type="text" id="doc-descricao" placeholder="Ex: CNH do sócio João Silva, Certidão válidade 12/2025..."/>
+              </div>
+            </div>
+
+            <!-- Upload area -->
+            <div class="upload-area" id="upload-area"
+              onclick="document.getElementById('doc-input').click()"
+              ondragover="event.preventDefault();this.classList.add('drag')"
+              ondragleave="this.classList.remove('drag')"
+              ondrop="event.preventDefault();this.classList.remove('drag');handleDrop(event)">
+              <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <p>Clique ou arraste o arquivo aqui</p>
+              <span>PDF, JPG, PNG, DOCX — máx. 10MB</span>
+              <div class="upload-progress" id="upload-progress">
+                <div class="upload-progress-bar" id="upload-progress-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <input type="file" id="doc-input" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.xlsx,.xls"
+              onchange="uploadDocumento(this.files[0])"/>
+          </div>
+
+          <!-- Lista de documentos -->
+          <div class="fsec">
+            <div class="fsec-title">DOCUMENTOS ANEXADOS</div>
+            <div id="docs-lista">
+              <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Nenhum documento anexado.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB ATIVOS -->
+      <div id="tab-ativos" class="tab-panel">
+        <div id="ativos-aviso-salvar" style="text-align:center;padding:24px;color:var(--text3);font-size:13px">
+          Salve o fornecedor primeiro para visualizar os ativos.
+        </div>
+        <div id="ativos-conteudo" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <span style="font-size:13px;color:var(--text2)">Máquinas, veículos e equipamentos vinculados</span>
+            <span id="ativos-count" style="font-size:12px;color:var(--text3)"></span>
+          </div>
+          <div id="ativos-lista">
+            <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Nenhum ativo vinculado a este fornecedor.</div>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="drawer-footer">
       <button class="btn-cancelar" onclick="fecharDrawer()">Cancelar</button>
@@ -352,10 +451,33 @@ tbody tr:hover td{background:rgba(46,123,196,0.04);}
 <script>
 const SUPABASE_URL='https://yoslcgwpboggofeubtqk.supabase.co';
 const SUPABASE_KEY='sb_publishable_SslKwCxg51q9N_hZbbS6Uw_FcBOEhnU';
+const DRIVE_GAS_URL='https://script.google.com/macros/s/AKfycbySWIpceHVwBEQ3Yf7UTjkc27fI4DQa4DR6eo8GjP4Qth6MMcP1BcAj-V5GbRw8Qsg/exec';
 const {createClient}=supabase;
 const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
 let sessao=null,obraId=null,fornecedores=[],fornecedorEditando=null;
 let _tipo='PJ',_pixLista=[],_sociosTemp=[],_mostrarInativos=false;
+let _tipoDocSel='outro';
+
+// Tipos de documento por tipo de pessoa
+const TIPOS_DOC_PJ=[
+  {id:'contrato_social',label:'Contrato Social'},
+  {id:'cartao_cnpj',label:'Cartão CNPJ'},
+  {id:'certidao_federal',label:'Certidão Federal'},
+  {id:'certidao_estadual',label:'Certidão Estadual'},
+  {id:'certidao_municipal',label:'Certidão Municipal'},
+  {id:'certidao_fgts',label:'Certidão FGTS'},
+  {id:'certidao_trabalhista',label:'Certidão Trabalhista'},
+  {id:'comprovante_endereco',label:'Comprovante Endereço'},
+  {id:'procuracao',label:'Procuração'},
+  {id:'outro',label:'Outro'},
+];
+const TIPOS_DOC_PF=[
+  {id:'rg',label:'RG'},
+  {id:'cnh',label:'CNH'},
+  {id:'cpf',label:'CPF'},
+  {id:'comprovante_endereco',label:'Comprovante Endereço'},
+  {id:'outro',label:'Outro'},
+];
 
 window.addEventListener('DOMContentLoaded',async()=>{
   const {data:{session}}=await sb.auth.getSession();
@@ -458,6 +580,14 @@ async function preencherDrawer(f){
   if(f.estado){document.getElementById('f-estado').value=f.estado;await carregarCidades('f-estado','f-cidade',f.cidade||'');}
   await recarregarSocios();
   await recarregarContatos();
+  // Habilita abas de documentos e ativos
+  document.getElementById('docs-aviso-salvar').style.display='none';
+  document.getElementById('docs-conteudo').style.display='block';
+  document.getElementById('ativos-aviso-salvar').style.display='none';
+  document.getElementById('ativos-conteudo').style.display='block';
+  renderTiposDoc();
+  await recarregarDocumentos();
+  await recarregarAtivos();
 }
 
 function setTipo(tipo){
@@ -679,6 +809,272 @@ async function excluirContato(id){
   if(!confirm('Remover contato?'))return;
   await sb.from('fornecedor_contatos').delete().eq('id',id);
   await recarregarContatos();
+}
+
+// ══════════════════════════════════════════
+// DOCUMENTOS
+// ══════════════════════════════════════════
+function renderTiposDoc(){
+  const tipos=_tipo==='PJ'?TIPOS_DOC_PJ:TIPOS_DOC_PF;
+  _tipoDocSel=tipos[0].id;
+  document.getElementById('docs-sec-titulo').textContent=_tipo==='PJ'?'DOCUMENTOS DA EMPRESA':'DOCUMENTOS DO FORNECEDOR';
+  document.getElementById('tipo-doc-select').innerHTML=tipos.map(t=>
+    `<div class="tipo-doc-opt${t.id===_tipoDocSel?' sel':''}" onclick="selecionarTipoDoc('${t.id}',this)">${t.label}</div>`
+  ).join('');
+}
+
+function selecionarTipoDoc(id,el){
+  _tipoDocSel=id;
+  document.querySelectorAll('.tipo-doc-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function handleDrop(e){
+  const file=e.dataTransfer.files[0];
+  if(file)uploadDocumento(file);
+}
+
+async function uploadDocumento(file){
+  if(!file||!fornecedorEditando){toast('Salve o fornecedor primeiro.','erro');return;}
+  if(file.size>10*1024*1024){toast('Arquivo muito grande. Máximo 10MB.','erro');return;}
+
+  const progress=document.getElementById('upload-progress');
+  const bar=document.getElementById('upload-progress-bar');
+  progress.style.display='block';
+  bar.style.width='20%';
+
+  try{
+    // Converte para base64
+    const base64=await new Promise((res,rej)=>{
+      const reader=new FileReader();
+      reader.onload=()=>res(reader.result.split(',')[1]);
+      reader.onerror=rej;
+      reader.readAsDataURL(file);
+    });
+    bar.style.width='50%';
+
+    // Gera token simples para o GAS
+    const token=btoa(`${sessao.user.id}:${Date.now()}:sapiens`);
+
+    // Envia para o GAS Drive
+    const subpasta=fornecedorEditando;
+    const resp=await fetch(DRIVE_GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        acao:'drive.upload',
+        token,
+        modulo:'Fornecedores',
+        subpasta,
+        nomeArquivo:file.name,
+        mimeType:file.type,
+        base64,
+        idRegistro:fornecedorEditando,
+        enviadoPor:sessao.user.id,
+      })
+    });
+    bar.style.width='80%';
+    const resultado=await resp.json();
+    if(!resultado.sucesso)throw new Error(resultado.erro||'Erro no upload');
+
+    // Salva referência no Supabase
+    const {error}=await sb.from('documentos').insert({
+      modulo:'fornecedor',
+      registro_id:fornecedorEditando,
+      tipo:_tipoDocSel,
+      descricao:document.getElementById('doc-descricao').value.trim()||null,
+      nome_arquivo:file.name,
+      mime_type:file.type,
+      tamanho_bytes:file.size,
+      drive_id:resultado.dados.driveId,
+      drive_url:resultado.dados.driveUrl,
+      download_url:resultado.dados.downloadUrl,
+      versao:1,
+      criado_por:sessao.user.id,
+    });
+    if(error)throw new Error(error.message);
+
+    bar.style.width='100%';
+    setTimeout(()=>{progress.style.display='none';bar.style.width='0%';},800);
+    document.getElementById('doc-descricao').value='';
+    toast('Documento enviado com sucesso!','sucesso');
+    await recarregarDocumentos();
+  }catch(err){
+    progress.style.display='none';bar.style.width='0%';
+    toast('Erro ao enviar: '+err.message,'erro');
+  }
+}
+
+async function recarregarDocumentos(){
+  if(!fornecedorEditando)return;
+  const {data}=await sb.from('documentos')
+    .select('*,criado_por_usr:usuarios!documentos_criado_por_fkey(nome)')
+    .eq('registro_id',fornecedorEditando)
+    .eq('modulo','fornecedor')
+    .eq('ativo',true)
+    .order('criado_em',{ascending:false});
+
+  const lista=data||[];
+  const wrap=document.getElementById('docs-lista');
+  if(!lista.length){
+    wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Nenhum documento anexado.</div>';
+    return;
+  }
+
+  const icones={'application/pdf':'📄','image/jpeg':'🖼️','image/png':'🖼️','application/msword':'📝','application/vnd.openxmlformats-officedocument.wordprocessingml.document':'📝'};
+
+  wrap.innerHTML=lista.map(d=>`
+    <div class="doc-item">
+      <div class="doc-icon">${icones[d.mime_type]||'📎'}</div>
+      <div class="doc-info">
+        <div class="doc-nome">${d.nome_arquivo}</div>
+        <div class="doc-meta">${d.criado_por_usr?.nome||'—'} · ${formatarData(d.criado_em)}</div>
+        <span class="doc-tipo-badge">${tipoDocLabel(d.tipo)}</span>
+        ${d.descricao?`<div style="font-size:11px;color:var(--text2);margin-top:2px">${d.descricao}</div>`:''}
+      </div>
+      <div class="doc-actions">
+        <a href="${d.drive_url}" target="_blank" class="btn-icon" title="Visualizar">👁</a>
+        <a href="${d.download_url}" target="_blank" class="btn-icon" title="Baixar">⬇</a>
+        <button class="btn-icon danger" onclick="excluirDocumento('${d.id}','${d.drive_id}')" title="Excluir">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function excluirDocumento(id,driveId){
+  if(!confirm('Remover este documento?'))return;
+  const token=btoa(`${sessao.user.id}:${Date.now()}:sapiens`);
+  // Inativa no Supabase
+  await sb.from('documentos').update({ativo:false,editado_por:sessao.user.id}).eq('id',id);
+  // Remove do Drive (move para lixeira)
+  fetch(DRIVE_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({acao:'drive.excluir',token,driveId,excluirDrive:true})
+  }).catch(()=>{});
+  toast('Documento removido.','sucesso');
+  await recarregarDocumentos();
+}
+
+function tipoDocLabel(tipo){
+  const todos=[...TIPOS_DOC_PJ,...TIPOS_DOC_PF,
+    {id:'rg_socio',label:'RG Sócio'},{id:'cnh_socio',label:'CNH Sócio'},{id:'cpf_socio',label:'CPF Sócio'},
+    {id:'crlv',label:'CRLV'},{id:'art',label:'ART'},{id:'laudo_vistoria',label:'Laudo Vistoria'},
+    {id:'nota_fiscal',label:'Nota Fiscal'},{id:'seguro',label:'Seguro'},{id:'manual',label:'Manual'},
+  ];
+  return todos.find(t=>t.id===tipo)?.label||tipo||'Outro';
+}
+
+function formatarData(iso){
+  if(!iso)return'—';
+  return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+// ══════════════════════════════════════════
+// ATIVOS VINCULADOS
+// ══════════════════════════════════════════
+async function recarregarAtivos(){
+  if(!fornecedorEditando)return;
+  const {data}=await sb.from('ativos')
+    .select('*,contratos(numero)')
+    .eq('obra_id',obraId||'00000000-0000-0000-0000-000000000000')
+    .order('nome');
+
+  // Filtra ativos deste fornecedor via contrato
+  // (ativos vinculados a contratos do fornecedor atual)
+  const {data:contratos}=await sb.from('contratos')
+    .select('id,numero')
+    .eq('fornecedor_id',fornecedorEditando);
+
+  const idsContratos=new Set((contratos||[]).map(c=>c.id));
+  const ativos=(data||[]).filter(a=>a.contrato_id&&idsContratos.has(a.contrato_id));
+
+  document.getElementById('ativos-count').textContent=`${ativos.length} ativo(s)`;
+  const wrap=document.getElementById('ativos-lista');
+
+  if(!ativos.length){
+    wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Nenhum ativo vinculado a este fornecedor.</div>';
+    return;
+  }
+
+  wrap.innerHTML=ativos.map(a=>`
+    <div class="ativo-card">
+      <div class="ativo-card-header">
+        <div>
+          <div class="ativo-card-titulo">${tipoAtivoIcon(a.tipo)} ${a.nome}</div>
+          <div class="ativo-card-meta">${a.tipo} · ${a.placa||a.numero_serie||'—'} · Contrato: ${a.contratos?.numero||'—'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge badge-${a.status==='em_uso'?'em_uso':a.status==='disponivel'?'ativo':'inativo'}">${a.status}</span>
+          <button class="ativo-docs-toggle" onclick="toggleAtivosDocs('${a.id}',this)">📎 Documentos</button>
+        </div>
+      </div>
+      <div class="ativo-docs-wrap" id="ativo-docs-${a.id}">
+        <div id="ativo-docs-lista-${a.id}" style="margin-bottom:8px">
+          <div style="font-size:12px;color:var(--text3)">Carregando...</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--blue2)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Anexar documento
+          <input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.docx"
+            onchange="uploadDocumentoAtivo('${a.id}',this.files[0])"/>
+        </label>
+      </div>
+    </div>
+  `).join('');
+}
+
+function tipoAtivoIcon(tipo){
+  return{maquina:'⚙️',veiculo:'🚛',equipamento:'🔧'}[tipo]||'📦';
+}
+
+async function toggleAtivosDocs(ativoId,btn){
+  const wrap=document.getElementById('ativo-docs-'+ativoId);
+  const aberto=wrap.classList.toggle('aberto');
+  if(aberto)await carregarDocsAtivo(ativoId);
+}
+
+async function carregarDocsAtivo(ativoId){
+  const {data}=await sb.from('documentos')
+    .select('*')
+    .eq('registro_id',ativoId)
+    .eq('modulo','ativo')
+    .eq('ativo',true)
+    .order('criado_em',{ascending:false});
+
+  const lista=data||[];
+  const wrap=document.getElementById('ativo-docs-lista-'+ativoId);
+  if(!lista.length){
+    wrap.innerHTML='<div style="font-size:12px;color:var(--text3)">Nenhum documento anexado a este ativo.</div>';
+    return;
+  }
+  wrap.innerHTML=lista.map(d=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:14px">📎</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.nome_arquivo}</div>
+        <span class="doc-tipo-badge">${tipoDocLabel(d.tipo)}</span>
+      </div>
+      <a href="${d.drive_url}" target="_blank" class="btn-icon" style="font-size:11px">Ver</a>
+      <a href="${d.download_url}" target="_blank" class="btn-icon" style="font-size:11px">⬇</a>
+    </div>
+  `).join('');
+}
+
+async function uploadDocumentoAtivo(ativoId,file){
+  if(!file)return;
+  if(file.size>10*1024*1024){toast('Arquivo muito grande. Máximo 10MB.','erro');return;}
+  toast('Enviando...','sucesso');
+  try{
+    const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+    const token=btoa(`${sessao.user.id}:${Date.now()}:sapiens`);
+    const resp=await fetch(DRIVE_GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({acao:'drive.upload',token,modulo:'Frota',subpasta:ativoId,nomeArquivo:file.name,mimeType:file.type,base64,idRegistro:ativoId,enviadoPor:sessao.user.id})
+    });
+    const resultado=await resp.json();
+    if(!resultado.sucesso)throw new Error(resultado.erro);
+    await sb.from('documentos').insert({modulo:'ativo',registro_id:ativoId,tipo:'outro',nome_arquivo:file.name,mime_type:file.type,tamanho_bytes:file.size,drive_id:resultado.dados.driveId,drive_url:resultado.dados.driveUrl,download_url:resultado.dados.downloadUrl,versao:1,criado_por:sessao.user.id});
+    toast('Documento do ativo enviado!','sucesso');
+    await carregarDocsAtivo(ativoId);
+  }catch(err){toast('Erro: '+err.message,'erro');}
 }
 
 async function carregarCidades(selEstadoId,selCidadeId,cidadeAtual=''){
