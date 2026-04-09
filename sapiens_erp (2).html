@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAPIENS ERP</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --navy: #0B1929;
+    --navy2: #112236;
+    --navy3: #1A3352;
+    --blue: #2E7BC4;
+    --blue2: #3E8FD8;
+    --blue-glow: rgba(46,123,196,0.25);
+    --steel: #4A7FA5;
+    --text: #E8EDF2;
+    --text2: #8AA5BE;
+    --text3: #4D6B85;
+    --border: rgba(46,123,196,0.2);
+    --border2: rgba(46,123,196,0.4);
+    --success: #2ECC8A;
+    --danger: #E05555;
+    --warning: #E0A830;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND GRID ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(46,123,196,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(46,123,196,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ══════════════════════════════
+     TELA DE LOGIN
+  ══════════════════════════════ */
+  #tela-login {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    background: var(--navy);
+  }
+
+  .login-card {
+    position: relative;
+    width: 420px;
+    background: var(--navy2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 48px 40px;
+    box-shadow: 0 0 60px rgba(46,123,196,0.12), 0 24px 48px rgba(0,0,0,0.5);
+    animation: fadeUp 0.5s ease;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 20%; right: 20%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    border-radius: 2px;
+  }
+
+  .logo {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .logo-mark {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--navy3), var(--blue));
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    border: 1px solid var(--border2);
+    box-shadow: 0 0 24px var(--blue-glow);
+  }
+
+  .logo-mark svg { width: 28px; height: 28px; }
+
+  .logo h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--text);
+  }
+
+  .logo p {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 8px;
+  }
+
+  .form-group input {
+    width: 100%;
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-group input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-glow);
+  }
+
+  .form-group input::placeholder { color: var(--text3); }
+
+  .btn-entrar {
+    width: 100%;
+    padding: 14px;
+    background: var(--blue);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    margin-top: 8px;
+  }
+
+  .btn-entrar:hover {
+    background: var(--blue2);
+    box-shadow: 0 0 20px var(--blue-glow);
+  }
+
+  .btn-entrar:active { transform: scale(0.99); }
+  .btn-entrar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .login-erro {
+    background: rgba(224,85,85,0.12);
+    border: 1px solid rgba(224,85,85,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #ff8080;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .login-erro.visivel { display: block; animation: shake 0.3s ease; }
+
+  /* ══════════════════════════════
+     TELA PRINCIPAL (APP)
+  ══════════════════════════════ */
+  #tela-app {
+    display: none;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    background: rgba(11,25,41,0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 100;
+    gap: 20px;
+  }
+
+  .topbar-logo {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .topbar-logo-mark {
+    width: 30px; height: 30px;
+    background: var(--blue);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .topbar-logo-mark svg { width: 16px; height: 16px; }
+
+  .topbar-sep {
+    width: 1px; height: 24px;
+    background: var(--border);
+  }
+
+  .obra-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .obra-badge:hover { border-color: var(--blue); }
+  .obra-badge span { color: var(--text); font-weight: 500; }
+
+  .topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .user-avatar {
+    width: 34px; height: 34px;
+    background: var(--navy3);
+    border: 1px solid var(--border2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--blue2);
+  }
+
+  .user-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .perfil-badge {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--blue2);
+    background: rgba(46,123,196,0.12);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+
+  .btn-sair {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-sair:hover {
+    border-color: var(--danger);
+    color: #ff8080;
+  }
+
+  /* ── CONTEÚDO ── */
+  .app-content {
+    padding-top: 80px;
+    padding-bottom: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 20px;
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── SELETOR DE OBRA ── */
+  #tela-obras {
+    display: none;
+  }
+
+  .obras-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .obra-card {
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .obra-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--blue);
+    transform: scaleX(0);
+    transition: transform 0.2s;
+  }
+
+  .obra-card:hover {
+    border-color: var(--blue);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .obra-card:hover::before { transform: scaleX(1); }
+
+  .obra-card h3 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .obra-card .obra-local {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 12px;
+  }
+
+  .status-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .status-dot::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+
+  .status-dot.inativa::before { background: var(--text3); }
+
+  /* ── PORTAL DE MÓDULOS ── */
+  #tela-modulos { display: none; }
+
+  .modulos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .modulo-card {
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .modulo-card:hover {
+    border-color: var(--blue);
+    background: var(--navy3);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 0 20px var(--blue-glow);
+  }
+
+  .modulo-icon {
+    width: 52px; height: 52px;
+    background: var(--navy3);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    transition: all 0.2s;
+  }
+
+  .modulo-card:hover .modulo-icon {
+    background: rgba(46,123,196,0.2);
+    border-color: var(--blue);
+    box-shadow: 0 0 16px var(--blue-glow);
+  }
+
+  .modulo-icon svg { width: 24px; height: 24px; stroke: var(--blue2); fill: none; }
+
+  .modulo-card h3 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .modulo-card .modulo-tag {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 6px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── OBRA ATIVA BANNER ── */
+  .obra-ativa-banner {
+    background: linear-gradient(135deg, var(--navy2), var(--navy3));
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 8px;
+  }
+
+  .obra-ativa-icon {
+    width: 44px; height: 44px;
+    background: rgba(46,123,196,0.15);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .obra-ativa-icon svg { width: 22px; height: 22px; stroke: var(--blue2); fill: none; }
+
+  .obra-ativa-info h2 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .obra-ativa-info p {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .btn-trocar-obra {
+    margin-left: auto;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-trocar-obra:hover {
+    border-color: var(--blue);
+    color: var(--blue2);
+  }
+
+  /* ── TOAST ── */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .toast {
+    background: var(--navy2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    animation: slideIn 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 280px;
+  }
+
+  .toast.sucesso { border-left: 3px solid var(--success); }
+  .toast.erro { border-left: 3px solid var(--danger); }
+
+  /* ── LOADING ── */
+  .loading-spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+
+  .empty-state svg {
+    width: 48px; height: 48px;
+    stroke: var(--text3);
+    fill: none;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .empty-state p { font-size: 14px; }
+
+  /* ── BOTÃO ADMIN TOPBAR ── */
+  .btn-admin {
+    padding: 6px 14px;
+    background: rgba(46,123,196,0.12);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--blue2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-admin:hover { background: rgba(46,123,196,0.22); }
+
+  /* ── TELA ADMIN ── */
+  #tela-admin { display: none; }
+
+  .admin-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+
+  .admin-tab {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .admin-tab:hover { color: var(--text); }
+  .admin-tab.ativo { color: var(--blue2); border-bottom-color: var(--blue); }
+
+  .admin-panel { display: none; }
+  .admin-panel.ativo { display: block; animation: fadeIn 0.2s ease; }
+
+  /* ── FORMULÁRIO ADMIN ── */
+  .admin-form {
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .admin-form h3 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .form-row .form-group { margin-bottom: 0; }
+
+  .form-group select {
+    width: 100%;
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+
+  .form-group select:focus { border-color: var(--blue); }
+  .form-group select option { background: var(--navy2); }
+
+  .btn-salvar {
+    padding: 11px 24px;
+    background: var(--blue);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-salvar:hover { background: var(--blue2); box-shadow: 0 0 16px var(--blue-glow); }
+  .btn-salvar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ── TABELA ADMIN ── */
+  .admin-table-wrap {
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .admin-table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .admin-table-header h3 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text2);
+    text-transform: uppercase;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+  }
+
+  tbody td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text);
+    border-bottom: 1px solid rgba(46,123,196,0.08);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(46,123,196,0.04); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-ativo { background: rgba(46,204,138,0.12); color: var(--success); border: 1px solid rgba(46,204,138,0.25); }
+  .badge-inativo { background: rgba(77,107,133,0.2); color: var(--text3); border: 1px solid var(--border); }
+  .badge-admin { background: rgba(46,123,196,0.15); color: var(--blue2); border: 1px solid var(--border2); }
+  .badge-gestor { background: rgba(224,168,48,0.12); color: var(--warning); border: 1px solid rgba(224,168,48,0.25); }
+  .badge-operador { background: rgba(77,107,133,0.15); color: var(--text2); border: 1px solid var(--border); }
+
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+    margin-right: 4px;
+  }
+
+  .btn-icon:hover { border-color: var(--blue); color: var(--blue2); }
+  .btn-icon.danger:hover { border-color: var(--danger); color: #ff8080; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal {
+    background: var(--navy2);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 28px;
+    width: 480px;
+    max-width: 95vw;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+    animation: fadeUp 0.2s ease;
+  }
+
+  .modal h3 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  .btn-cancelar {
+    padding: 10px 20px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-cancelar:hover { border-color: var(--text2); color: var(--text); }
+
+  /* ── ANIMAÇÕES ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .fade-in { animation: fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+
+<!-- ══ TELA DE LOGIN ══ -->
+<div id="tela-login">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <h1>SAPIENS</h1>
+      <p>Sistema de Gestão de Contratos</p>
+    </div>
+
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="input-email" placeholder="seu@email.com.br" autocomplete="email"/>
+    </div>
+
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="input-senha" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+
+    <button class="btn-entrar" id="btn-entrar" onclick="fazerLogin()">ENTRAR</button>
+
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<!-- ══ TELA PRINCIPAL ══ -->
+<div id="tela-app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="topbar-logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      SAPIENS
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="obra-badge" onclick="voltarParaObras()" id="obra-badge-topbar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      <span id="obra-nome-topbar">Selecionar obra</span>
+    </div>
+    <div id="btn-admin-wrap" style="display:none">
+      <button class="btn-admin" onclick="mostrarAdmin()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><circle cx="19" cy="6" r="3" fill="currentColor" stroke="none"/></svg>
+        Administração
+      </button>
+    </div>
+    <div class="topbar-right">
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div>
+          <div class="user-name" id="user-nome-display">—</div>
+          <div class="perfil-badge" id="user-perfil-display">—</div>
+        </div>
+      </div>
+      <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="app-content">
+
+    <!-- SELETOR DE OBRAS -->
+    <div id="tela-obras">
+      <div class="section-title">Selecione a obra</div>
+      <div class="obras-grid" id="obras-grid">
+        <div class="empty-state">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PORTAL DE MÓDULOS -->
+    <div id="tela-modulos">
+      <div id="obra-ativa-banner" class="obra-ativa-banner">
+        <div class="obra-ativa-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="obra-ativa-info">
+          <h2 id="obra-ativa-nome">—</h2>
+          <p id="obra-ativa-local">—</p>
+        </div>
+        <button class="btn-trocar-obra" onclick="voltarParaObras()">Trocar obra</button>
+      </div>
+
+      <div class="section-title">Módulos disponíveis</div>
+      <div class="modulos-grid" id="modulos-grid"></div>
+    </div>
+
+    <!-- ADMINISTRAÇÃO -->
+    <div id="tela-admin">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <div>
+          <div class="section-title" style="margin:0 0 4px">Administração</div>
+          <p style="font-size:12px;color:var(--text3)">Gerencie obras, usuários e vínculos</p>
+        </div>
+        <button class="btn-cancelar" onclick="voltarDoAdmin()">← Voltar</button>
+      </div>
+
+      <div class="admin-tabs">
+        <button class="admin-tab ativo" onclick="trocarAbaAdmin('obras')">Obras</button>
+        <button class="admin-tab" onclick="trocarAbaAdmin('usuarios')">Usuários</button>
+        <button class="admin-tab" onclick="trocarAbaAdmin('vinculos')">Vínculos</button>
+      </div>
+
+      <!-- PAINEL OBRAS -->
+      <div id="admin-obras" class="admin-panel ativo">
+        <div class="admin-form">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Nova obra
+          </h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nome da obra *</label>
+              <input type="text" id="obra-nome" placeholder="Ex: Residencial Atlântico"/>
+            </div>
+            <div class="form-group">
+              <label>Código</label>
+              <input type="text" id="obra-codigo" placeholder="Ex: OBR-001"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Estado</label>
+              <select id="obra-estado" onchange="carregarCidades('obra-estado','obra-cidade')">
+                <option value="">Selecione...</option>
+                <option value="AC">AC – Acre</option><option value="AL">AL – Alagoas</option>
+                <option value="AP">AP – Amapá</option><option value="AM">AM – Amazonas</option>
+                <option value="BA">BA – Bahia</option><option value="CE">CE – Ceará</option>
+                <option value="DF">DF – Distrito Federal</option><option value="ES">ES – Espírito Santo</option>
+                <option value="GO">GO – Goiás</option><option value="MA">MA – Maranhão</option>
+                <option value="MT">MT – Mato Grosso</option><option value="MS">MS – Mato Grosso do Sul</option>
+                <option value="MG">MG – Minas Gerais</option><option value="PA">PA – Pará</option>
+                <option value="PB">PB – Paraíba</option><option value="PR">PR – Paraná</option>
+                <option value="PE">PE – Pernambuco</option><option value="PI">PI – Piauí</option>
+                <option value="RJ">RJ – Rio de Janeiro</option><option value="RN">RN – Rio Grande do Norte</option>
+                <option value="RS">RS – Rio Grande do Sul</option><option value="RO">RO – Rondônia</option>
+                <option value="RR">RR – Roraima</option><option value="SC">SC – Santa Catarina</option>
+                <option value="SP">SP – São Paulo</option><option value="SE">SE – Sergipe</option>
+                <option value="TO">TO – Tocantins</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Cidade</label>
+              <select id="obra-cidade" disabled>
+                <option value="">Selecione o estado primeiro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="obra-status">
+                <option value="ativa">Ativa</option>
+                <option value="inativa">Inativa</option>
+                <option value="concluida">Concluída</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-salvar" id="btn-salvar-obra" onclick="salvarObra()">Salvar obra</button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <h3>Obras cadastradas</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Código</th>
+                <th>Cidade / Estado</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-obras">
+              <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAINEL USUÁRIOS -->
+      <div id="admin-usuarios" class="admin-panel">
+        <div class="admin-form">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Novo usuário
+          </h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nome completo *</label>
+              <input type="text" id="usr-nome" placeholder="Nome do usuário"/>
+            </div>
+            <div class="form-group">
+              <label>E-mail *</label>
+              <input type="email" id="usr-email" placeholder="email@empresa.com"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Senha provisória *</label>
+              <input type="password" id="usr-senha" placeholder="Mínimo 6 caracteres"/>
+            </div>
+            <div class="form-group">
+              <label>Perfil *</label>
+              <select id="usr-perfil">
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-salvar" id="btn-salvar-usr" onclick="salvarUsuario()">Criar usuário</button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <h3>Usuários cadastrados</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-usuarios">
+              <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAINEL VÍNCULOS -->
+      <div id="admin-vinculos" class="admin-panel">
+        <div class="admin-form">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Vincular usuário à obra
+          </h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Usuário *</label>
+              <select id="vinc-usuario">
+                <option value="">Selecione o usuário...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Obra *</label>
+              <select id="vinc-obra">
+                <option value="">Selecione a obra...</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-salvar" id="btn-salvar-vinc" onclick="salvarVinculo()">Vincular</button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <h3>Vínculos ativos</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Obra</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-vinculos">
+              <tr><td colspan="3" style="text-align:center;color:var(--text3);padding:32px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+<!-- MODAL EDITAR OBRA -->
+<div class="modal-overlay" id="modal-editar-obra" onclick="fecharModal('modal-editar-obra')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Editar obra</h3>
+    <input type="hidden" id="edit-obra-id"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nome da obra *</label>
+        <input type="text" id="edit-obra-nome"/>
+      </div>
+      <div class="form-group">
+        <label>Código</label>
+        <input type="text" id="edit-obra-codigo"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Estado</label>
+        <select id="edit-obra-estado" onchange="carregarCidades('edit-obra-estado','edit-obra-cidade')">
+          <option value="">Selecione...</option>
+          <option value="AC">AC – Acre</option><option value="AL">AL – Alagoas</option>
+          <option value="AP">AP – Amapá</option><option value="AM">AM – Amazonas</option>
+          <option value="BA">BA – Bahia</option><option value="CE">CE – Ceará</option>
+          <option value="DF">DF – Distrito Federal</option><option value="ES">ES – Espírito Santo</option>
+          <option value="GO">GO – Goiás</option><option value="MA">MA – Maranhão</option>
+          <option value="MT">MT – Mato Grosso</option><option value="MS">MS – Mato Grosso do Sul</option>
+          <option value="MG">MG – Minas Gerais</option><option value="PA">PA – Pará</option>
+          <option value="PB">PB – Paraíba</option><option value="PR">PR – Paraná</option>
+          <option value="PE">PE – Pernambuco</option><option value="PI">PI – Piauí</option>
+          <option value="RJ">RJ – Rio de Janeiro</option><option value="RN">RN – Rio Grande do Norte</option>
+          <option value="RS">RS – Rio Grande do Sul</option><option value="RO">RO – Rondônia</option>
+          <option value="RR">RR – Roraima</option><option value="SC">SC – Santa Catarina</option>
+          <option value="SP">SP – São Paulo</option><option value="SE">SE – Sergipe</option>
+          <option value="TO">TO – Tocantins</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Cidade</label>
+        <select id="edit-obra-cidade" disabled>
+          <option value="">Selecione o estado primeiro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-obra-status">
+          <option value="ativa">Ativa</option>
+          <option value="inativa">Inativa</option>
+          <option value="concluida">Concluída</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancelar" onclick="fecharModal('modal-editar-obra')">Cancelar</button>
+      <button class="btn-salvar" id="btn-confirmar-editar-obra" onclick="confirmarEditarObra()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR USUÁRIO -->
+<div class="modal-overlay" id="modal-editar-usuario" onclick="fecharModal('modal-editar-usuario')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Editar usuário</h3>
+    <input type="hidden" id="edit-usr-id"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nome completo *</label>
+        <input type="text" id="edit-usr-nome"/>
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="edit-usr-email" disabled style="opacity:0.5"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Perfil *</label>
+        <select id="edit-usr-perfil"></select>
+      </div>
+      <div class="form-group">
+        <label>Nova senha <span style="font-size:10px;color:var(--text3)">(deixe vazio para não alterar)</span></label>
+        <input type="password" id="edit-usr-senha" placeholder="Mínimo 6 caracteres"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancelar" onclick="fecharModal('modal-editar-usuario')">Cancelar</button>
+      <button class="btn-salvar" id="btn-confirmar-editar-usr" onclick="confirmarEditarUsuario()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIGURAÇÃO SUPABASE
+// ══════════════════════════════════════════
+const SUPABASE_URL  = 'https://yoslcgwpboggofeubtqk.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_SslKwCxg51q9N_hZbbS6Uw_FcBOEhnU';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ══════════════════════════════════════════
+// ESTADO DA APLICAÇÃO
+// ══════════════════════════════════════════
+let sessaoUsuario = null;
+let dadosUsuario  = null;
+let obraAtiva     = null;
+
+// ══════════════════════════════════════════
+// MÓDULOS DO SISTEMA
+// ══════════════════════════════════════════
+const MODULOS = [
+  {
+    id: 'solicitacao_contratos',
+    nome: 'Solicitação de Contratos',
+    tag: 'Contratos',
+    icon: `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`
+  },
+  {
+    id: 'cadastro_fornecedor',
+    nome: 'Cadastro de Fornecedor',
+    tag: 'Fornecedores',
+    icon: `<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`
+  },
+  {
+    id: 'elaboracao_contratos',
+    nome: 'Elaboração de Contratos',
+    tag: 'Contratos',
+    icon: `<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`
+  },
+  {
+    id: 'gestao_contratos',
+    nome: 'Gestão de Contratos',
+    tag: 'Contratos',
+    icon: `<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`
+  },
+  {
+    id: 'medicoes',
+    nome: 'Medições',
+    tag: 'Financeiro',
+    icon: `<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`
+  },
+  {
+    id: 'assinatura_medicoes',
+    nome: 'Assinatura de Medições',
+    tag: 'Financeiro',
+    icon: `<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`
+  },
+  {
+    id: 'gestao_frota',
+    nome: 'Gestão de Frota',
+    tag: 'Frota',
+    icon: `<svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`
+  },
+  {
+    id: 'escaner_diario',
+    nome: 'Escaner de Diário (IA)',
+    tag: 'Inteligência',
+    icon: `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
+  },
+  {
+    id: 'contas_pagar',
+    nome: 'Contas a Pagar',
+    tag: 'Financeiro',
+    icon: `<svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`
+  },
+  {
+    id: 'status_pagamentos',
+    nome: 'Status de Pagamentos',
+    tag: 'Financeiro',
+    icon: `<svg viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>`
+  },
+  {
+    id: 'portal_fornecedor',
+    nome: 'Portal do Fornecedor',
+    tag: 'Fornecedores',
+    icon: `<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
+  },
+];
+
+// ══════════════════════════════════════════
+// INICIALIZAÇÃO
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  // Verifica se já há sessão ativa
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    sessaoUsuario = session;
+    await carregarUsuario(session.user.id);
+    mostrarApp();
+  }
+
+  // Enter no campo de senha faz login
+  document.getElementById('input-senha').addEventListener('keydown', e => {
+    if (e.key === 'Enter') fazerLogin();
+  });
+  document.getElementById('input-email').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('input-senha').focus();
+  });
+});
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+async function fazerLogin() {
+  const email = document.getElementById('input-email').value.trim();
+  const senha  = document.getElementById('input-senha').value;
+  const erro   = document.getElementById('login-erro');
+  const btn    = document.getElementById('btn-entrar');
+
+  if (!email || !senha) {
+    mostrarErroLogin('Preencha o e-mail e a senha.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span>';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+
+  if (error) {
+    btn.disabled = false;
+    btn.textContent = 'ENTRAR';
+    mostrarErroLogin('E-mail ou senha incorretos.');
+    return;
+  }
+
+  sessaoUsuario = data.session;
+  await carregarUsuario(data.user.id);
+  mostrarApp();
+}
+
+async function fazerLogout() {
+  await sb.auth.signOut();
+  sessaoUsuario = null;
+  dadosUsuario  = null;
+  obraAtiva     = null;
+  document.getElementById('btn-admin-wrap').style.display = 'none';
+  document.getElementById('tela-app').style.display = 'none';
+  document.getElementById('tela-login').style.display = 'flex';
+  document.getElementById('input-email').value = '';
+  document.getElementById('input-senha').value = '';
+  document.getElementById('btn-entrar').textContent = 'ENTRAR';
+  document.getElementById('btn-entrar').disabled = false;
+}
+
+async function carregarUsuario(userId) {
+  const { data } = await sb
+    .from('usuarios')
+    .select('*, perfis(nome)')
+    .eq('id', userId)
+    .single();
+
+  dadosUsuario = data;
+
+  if (data) {
+    const iniciais = data.nome.split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase();
+    document.getElementById('user-avatar').textContent = iniciais;
+    document.getElementById('user-nome-display').textContent = data.nome;
+    document.getElementById('user-perfil-display').textContent = data.perfis?.nome || '—';
+    if (data.perfis?.nome === 'admin') {
+      document.getElementById('btn-admin-wrap').style.display = 'block';
+    }
+  }
+}
+
+// ══════════════════════════════════════════
+// NAVEGAÇÃO
+// ══════════════════════════════════════════
+function mostrarApp() {
+  document.getElementById('tela-login').style.display = 'none';
+  document.getElementById('tela-app').style.display = 'block';
+  mostrarObras();
+}
+
+async function mostrarObras() {
+  document.getElementById('tela-modulos').style.display = 'none';
+  document.getElementById('tela-obras').style.display = 'block';
+
+  const grid = document.getElementById('obras-grid');
+  grid.innerHTML = '<div class="empty-state"><div class="loading-spinner"></div></div>';
+
+  // Admin vê tudo, outros veem só as suas
+  let query = sb.from('obras').select('*').eq('status', 'ativa');
+
+  if (dadosUsuario?.perfis?.nome !== 'admin') {
+    const { data: vincs } = await sb
+      .from('usuario_obras')
+      .select('obra_id')
+      .eq('usuario_id', sessaoUsuario.user.id);
+
+    const ids = (vincs || []).map(v => v.obra_id);
+    if (ids.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          <p>Nenhuma obra atribuída ao seu usuário.</p>
+        </div>`;
+      return;
+    }
+    query = query.in('id', ids);
+  }
+
+  const { data: obras, error } = await query.order('nome');
+
+  if (error || !obras?.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        <p>Nenhuma obra encontrada.</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = obras.map(o => `
+    <div class="obra-card fade-in" onclick="selecionarObra(${JSON.stringify(o).replace(/"/g,'&quot;')})">
+      <h3>${o.nome}</h3>
+      <p class="obra-local">${[o.cidade, o.estado].filter(Boolean).join(' — ') || 'Localização não informada'}</p>
+      <span class="status-dot ${o.status !== 'ativa' ? 'inativa' : ''}">${o.status}</span>
+    </div>
+  `).join('');
+}
+
+function selecionarObra(obra) {
+  obraAtiva = obra;
+  document.getElementById('obra-nome-topbar').textContent = obra.nome;
+  document.getElementById('obra-ativa-nome').textContent = obra.nome;
+  document.getElementById('obra-ativa-local').textContent =
+    [obra.cidade, obra.estado].filter(Boolean).join(' — ') || 'Localização não informada';
+
+  mostrarModulos();
+}
+
+function voltarParaObras() {
+  obraAtiva = null;
+  document.getElementById('obra-nome-topbar').textContent = 'Selecionar obra';
+  document.getElementById('tela-modulos').style.display = 'none';
+  mostrarObras();
+}
+
+function mostrarModulos() {
+  document.getElementById('tela-obras').style.display = 'none';
+  document.getElementById('tela-modulos').style.display = 'block';
+
+  const grid = document.getElementById('modulos-grid');
+  grid.innerHTML = MODULOS.map(m => `
+    <div class="modulo-card fade-in" onclick="abrirModulo('${m.id}')">
+      <div class="modulo-icon">${m.icon}</div>
+      <h3>${m.nome}</h3>
+      <p class="modulo-tag">${m.tag}</p>
+    </div>
+  `).join('');
+}
+
+function abrirModulo(id) {
+  const modulo = MODULOS.find(m => m.id === id);
+  mostrarToast(`Módulo "${modulo.nome}" em desenvolvimento.`, 'sucesso');
+}
+
+// ══════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════
+function mostrarAdmin() {
+  document.getElementById('tela-obras').style.display = 'none';
+  document.getElementById('tela-modulos').style.display = 'none';
+  document.getElementById('tela-admin').style.display = 'block';
+  carregarTabelaObras();
+  carregarTabelaUsuarios();
+  carregarTabelaVinculos();
+  carregarSelectsPerfis();
+  carregarSelectsVinculos();
+}
+
+function voltarDoAdmin() {
+  document.getElementById('tela-admin').style.display = 'none';
+  mostrarObras();
+}
+
+function trocarAbaAdmin(aba) {
+  document.querySelectorAll('.admin-tab').forEach((t,i) => {
+    const abas = ['obras','usuarios','vinculos'];
+    t.classList.toggle('ativo', abas[i] === aba);
+  });
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('ativo'));
+  document.getElementById('admin-' + aba).classList.add('ativo');
+}
+
+// ── OBRAS ──
+async function salvarObra() {
+  const nome   = document.getElementById('obra-nome').value.trim();
+  const codigo = document.getElementById('obra-codigo').value.trim();
+  const estado = document.getElementById('obra-estado').value;
+  const cidade = document.getElementById('obra-cidade').value;
+  const status = document.getElementById('obra-status').value;
+
+  if (!nome) { mostrarToast('Informe o nome da obra.', 'erro'); return; }
+
+  const btn = document.getElementById('btn-salvar-obra');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  const { error } = await sb.from('obras').insert({
+    nome, codigo: codigo || null, cidade: cidade || null,
+    estado: estado || null, status,
+    criado_por: sessaoUsuario.user.id
+  });
+
+  btn.disabled = false; btn.textContent = 'Salvar obra';
+
+  if (error) { mostrarToast('Erro ao salvar obra: ' + error.message, 'erro'); return; }
+
+  mostrarToast('Obra cadastrada com sucesso!', 'sucesso');
+  document.getElementById('obra-nome').value = '';
+  document.getElementById('obra-codigo').value = '';
+  document.getElementById('obra-estado').value = '';
+  document.getElementById('obra-cidade').innerHTML = '<option value="">Selecione o estado primeiro</option>';
+  document.getElementById('obra-cidade').disabled = true;
+  carregarTabelaObras();
+  carregarSelectsVinculos();
+}
+
+async function carregarTabelaObras() {
+  const { data: obras } = await sb.from('obras').select('*').order('nome');
+  const tbody = document.getElementById('tbody-obras');
+  if (!obras?.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px">Nenhuma obra cadastrada.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = obras.map(o => `
+    <tr>
+      <td>${o.nome}</td>
+      <td style="color:var(--text2)">${o.codigo || '—'}</td>
+      <td style="color:var(--text2)">${[o.cidade, o.estado].filter(Boolean).join(' / ') || '—'}</td>
+      <td><span class="badge badge-${o.status === 'ativa' ? 'ativo' : 'inativo'}">${o.status}</span></td>
+      <td>
+        <button class="btn-icon" onclick="abrirModalEditarObra(${JSON.stringify(o).replace(/"/g,'&quot;')})">Editar</button>
+        <button class="btn-icon danger" onclick="desativarObra('${o.id}','${o.status}')">
+          ${o.status === 'ativa' ? 'Desativar' : 'Ativar'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function desativarObra(id, statusAtual) {
+  const novoStatus = statusAtual === 'ativa' ? 'inativa' : 'ativa';
+  const { error } = await sb.from('obras').update({ status: novoStatus, editado_por: sessaoUsuario.user.id }).eq('id', id);
+  if (error) { mostrarToast('Erro ao atualizar obra.', 'erro'); return; }
+  mostrarToast(`Obra ${novoStatus === 'ativa' ? 'ativada' : 'desativada'}.`, 'sucesso');
+  carregarTabelaObras();
+}
+
+// ── USUÁRIOS ──
+async function carregarSelectsPerfis() {
+  const { data: perfis } = await sb.from('perfis').select('*').order('nome');
+  const sel = document.getElementById('usr-perfil');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  (perfis || []).forEach(p => {
+    sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+  });
+}
+
+async function salvarUsuario() {
+  const nome    = document.getElementById('usr-nome').value.trim();
+  const email   = document.getElementById('usr-email').value.trim();
+  const senha   = document.getElementById('usr-senha').value;
+  const perfilId = document.getElementById('usr-perfil').value;
+
+  if (!nome || !email || !senha || !perfilId) {
+    mostrarToast('Preencha todos os campos obrigatórios.', 'erro'); return;
+  }
+  if (senha.length < 6) {
+    mostrarToast('A senha deve ter no mínimo 6 caracteres.', 'erro'); return;
+  }
+
+  const btn = document.getElementById('btn-salvar-usr');
+  btn.disabled = true; btn.textContent = 'Criando...';
+
+  // Cria no auth do Supabase via Admin API (service role necessário em produção)
+  // Por ora cria direto na tabela — o usuário precisa ser criado no painel Auth
+  const { data: authData, error: authError } = await sb.auth.signUp({ email, password: senha });
+
+  if (authError) {
+    btn.disabled = false; btn.textContent = 'Criar usuário';
+    mostrarToast('Erro ao criar autenticação: ' + authError.message, 'erro'); return;
+  }
+
+  const userId = authData.user?.id;
+  if (!userId) {
+    btn.disabled = false; btn.textContent = 'Criar usuário';
+    mostrarToast('Não foi possível obter o ID do usuário.', 'erro'); return;
+  }
+
+  const { error: dbError } = await sb.from('usuarios').insert({
+    id: userId, nome, email, perfil_id: perfilId,
+    criado_por: sessaoUsuario.user.id
+  });
+
+  btn.disabled = false; btn.textContent = 'Criar usuário';
+
+  if (dbError) { mostrarToast('Erro ao salvar usuário: ' + dbError.message, 'erro'); return; }
+
+  mostrarToast('Usuário criado com sucesso!', 'sucesso');
+  document.getElementById('usr-nome').value = '';
+  document.getElementById('usr-email').value = '';
+  document.getElementById('usr-senha').value = '';
+  document.getElementById('usr-perfil').value = '';
+  carregarTabelaUsuarios();
+  carregarSelectsVinculos();
+}
+
+async function carregarTabelaUsuarios() {
+  const { data: usuarios } = await sb.from('usuarios').select('*, perfis(nome)').order('nome');
+  const tbody = document.getElementById('tbody-usuarios');
+  if (!usuarios?.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:32px">Nenhum usuário cadastrado.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = usuarios.map(u => `
+    <tr>
+      <td>${u.nome}</td>
+      <td style="color:var(--text2)">${u.email}</td>
+      <td><span class="badge badge-${u.perfis?.nome || 'operador'}">${u.perfis?.nome || '—'}</span></td>
+      <td><span class="badge badge-${u.ativo ? 'ativo' : 'inativo'}">${u.ativo ? 'ativo' : 'inativo'}</span></td>
+      <td>
+        <button class="btn-icon" onclick="abrirModalEditarUsuario(${JSON.stringify(u).replace(/"/g,'&quot;')})">Editar</button>
+        <button class="btn-icon danger" onclick="toggleUsuario('${u.id}',${u.ativo})">
+          ${u.ativo ? 'Desativar' : 'Ativar'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function toggleUsuario(id, ativo) {
+  const { error } = await sb.from('usuarios').update({ ativo: !ativo, editado_por: sessaoUsuario.user.id }).eq('id', id);
+  if (error) { mostrarToast('Erro ao atualizar usuário.', 'erro'); return; }
+  mostrarToast(`Usuário ${!ativo ? 'ativado' : 'desativado'}.`, 'sucesso');
+  carregarTabelaUsuarios();
+}
+
+// ── VÍNCULOS ──
+async function carregarSelectsVinculos() {
+  const [{ data: usuarios }, { data: obras }] = await Promise.all([
+    sb.from('usuarios').select('id, nome').eq('ativo', true).order('nome'),
+    sb.from('obras').select('id, nome').eq('status', 'ativa').order('nome'),
+  ]);
+
+  const selUsr = document.getElementById('vinc-usuario');
+  selUsr.innerHTML = '<option value="">Selecione o usuário...</option>';
+  (usuarios || []).forEach(u => selUsr.innerHTML += `<option value="${u.id}">${u.nome}</option>`);
+
+  const selObra = document.getElementById('vinc-obra');
+  selObra.innerHTML = '<option value="">Selecione a obra...</option>';
+  (obras || []).forEach(o => selObra.innerHTML += `<option value="${o.id}">${o.nome}</option>`);
+}
+
+async function salvarVinculo() {
+  const usuarioId = document.getElementById('vinc-usuario').value;
+  const obraId    = document.getElementById('vinc-obra').value;
+
+  if (!usuarioId || !obraId) { mostrarToast('Selecione o usuário e a obra.', 'erro'); return; }
+
+  const btn = document.getElementById('btn-salvar-vinc');
+  btn.disabled = true; btn.textContent = 'Vinculando...';
+
+  const { error } = await sb.from('usuario_obras').insert({
+    usuario_id: usuarioId, obra_id: obraId,
+    criado_por: sessaoUsuario.user.id
+  });
+
+  btn.disabled = false; btn.textContent = 'Vincular';
+
+  if (error) {
+    mostrarToast(error.code === '23505' ? 'Este vínculo já existe.' : 'Erro ao vincular: ' + error.message, 'erro');
+    return;
+  }
+
+  mostrarToast('Vínculo criado com sucesso!', 'sucesso');
+  carregarTabelaVinculos();
+}
+
+async function carregarTabelaVinculos() {
+  const { data: vinculos } = await sb
+    .from('usuario_obras')
+    .select('id, usuarios(nome), obras(nome)')
+    .order('criado_em', { ascending: false });
+
+  const tbody = document.getElementById('tbody-vinculos');
+  if (!vinculos?.length) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:32px">Nenhum vínculo cadastrado.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = vinculos.map(v => `
+    <tr>
+      <td>${v.usuarios?.nome || '—'}</td>
+      <td style="color:var(--text2)">${v.obras?.nome || '—'}</td>
+      <td>
+        <button class="btn-icon danger" onclick="removerVinculo('${v.id}')">Remover</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function removerVinculo(id) {
+  const { error } = await sb.from('usuario_obras').delete().eq('id', id);
+  if (error) { mostrarToast('Erro ao remover vínculo.', 'erro'); return; }
+  mostrarToast('Vínculo removido.', 'sucesso');
+  carregarTabelaVinculos();
+}
+
+// ══════════════════════════════════════════
+// IBGE — CIDADES POR ESTADO
+// ══════════════════════════════════════════
+async function carregarCidades(selectEstadoId, selectCidadeId, cidadeAtual = '') {
+  const uf  = document.getElementById(selectEstadoId).value;
+  const sel = document.getElementById(selectCidadeId);
+  sel.innerHTML = '<option value="">Carregando...</option>';
+  sel.disabled = true;
+  if (!uf) { sel.innerHTML = '<option value="">Selecione o estado primeiro</option>'; return; }
+  try {
+    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+    const cidades = await r.json();
+    sel.innerHTML = '<option value="">Selecione a cidade</option>';
+    cidades.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = c.nome;
+      if (c.nome === cidadeAtual) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.disabled = false;
+  } catch {
+    sel.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+  }
+}
+
+// ══════════════════════════════════════════
+// MODAL HELPERS
+// ══════════════════════════════════════════
+function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// ══════════════════════════════════════════
+// EDITAR OBRA
+// ══════════════════════════════════════════
+async function abrirModalEditarObra(obra) {
+  document.getElementById('edit-obra-id').value     = obra.id;
+  document.getElementById('edit-obra-nome').value   = obra.nome || '';
+  document.getElementById('edit-obra-codigo').value = obra.codigo || '';
+  document.getElementById('edit-obra-status').value = obra.status || 'ativa';
+  const selEstado = document.getElementById('edit-obra-estado');
+  selEstado.value = obra.estado || '';
+  if (obra.estado) await carregarCidades('edit-obra-estado', 'edit-obra-cidade', obra.cidade || '');
+  abrirModal('modal-editar-obra');
+}
+
+async function confirmarEditarObra() {
+  const id     = document.getElementById('edit-obra-id').value;
+  const nome   = document.getElementById('edit-obra-nome').value.trim();
+  const codigo = document.getElementById('edit-obra-codigo').value.trim();
+  const estado = document.getElementById('edit-obra-estado').value;
+  const cidade = document.getElementById('edit-obra-cidade').value;
+  const status = document.getElementById('edit-obra-status').value;
+  if (!nome) { mostrarToast('Informe o nome da obra.', 'erro'); return; }
+  const btn = document.getElementById('btn-confirmar-editar-obra');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const { error } = await sb.from('obras').update({
+    nome, codigo: codigo || null, estado: estado || null,
+    cidade: cidade || null, status, editado_por: sessaoUsuario.user.id
+  }).eq('id', id);
+  btn.disabled = false; btn.textContent = 'Salvar alterações';
+  if (error) { mostrarToast('Erro ao salvar: ' + error.message, 'erro'); return; }
+  mostrarToast('Obra atualizada com sucesso!', 'sucesso');
+  fecharModal('modal-editar-obra');
+  carregarTabelaObras();
+  carregarSelectsVinculos();
+}
+
+// ══════════════════════════════════════════
+// EDITAR USUÁRIO
+// ══════════════════════════════════════════
+async function abrirModalEditarUsuario(usuario) {
+  document.getElementById('edit-usr-id').value    = usuario.id;
+  document.getElementById('edit-usr-nome').value  = usuario.nome || '';
+  document.getElementById('edit-usr-email').value = usuario.email || '';
+  document.getElementById('edit-usr-senha').value = '';
+  const { data: perfis } = await sb.from('perfis').select('*').order('nome');
+  const sel = document.getElementById('edit-usr-perfil');
+  sel.innerHTML = '';
+  (perfis || []).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.nome;
+    if (p.id === usuario.perfil_id) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  abrirModal('modal-editar-usuario');
+}
+
+async function confirmarEditarUsuario() {
+  const id       = document.getElementById('edit-usr-id').value;
+  const nome     = document.getElementById('edit-usr-nome').value.trim();
+  const perfilId = document.getElementById('edit-usr-perfil').value;
+  const senha    = document.getElementById('edit-usr-senha').value;
+  if (!nome || !perfilId) { mostrarToast('Preencha nome e perfil.', 'erro'); return; }
+  if (senha && senha.length < 6) { mostrarToast('Senha deve ter no mínimo 6 caracteres.', 'erro'); return; }
+  const btn = document.getElementById('btn-confirmar-editar-usr');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const { error } = await sb.from('usuarios').update({
+    nome, perfil_id: perfilId, editado_por: sessaoUsuario.user.id
+  }).eq('id', id);
+  btn.disabled = false; btn.textContent = 'Salvar alterações';
+  if (error) { mostrarToast('Erro ao salvar: ' + error.message, 'erro'); return; }
+  mostrarToast('Usuário atualizado com sucesso!', 'sucesso');
+  fecharModal('modal-editar-usuario');
+  carregarTabelaUsuarios();
+}
+
+function mostrarErroLogin(msg) {
+  const el = document.getElementById('login-erro');
+  el.textContent = msg;
+  el.classList.add('visivel');
+  setTimeout(() => el.classList.remove('visivel'), 4000);
+}
+
+function mostrarToast(msg, tipo = 'sucesso') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${tipo}`;
+  toast.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${tipo === 'sucesso' ? '#2ECC8A' : '#E05555'}" stroke-width="2">
+      ${tipo === 'sucesso'
+        ? '<polyline points="20 6 9 17 4 12"/>'
+        : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
+    </svg>
+    ${msg}
+  `;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+</script>
+</body>
+</html>
