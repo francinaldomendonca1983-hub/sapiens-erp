@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAPIENS — Solicitações de Contratos</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#0B1929;--navy2:#112236;--navy3:#1A3352;--blue:#2E7BC4;--blue2:#3E8FD8;--blue-glow:rgba(46,123,196,0.25);--text:#E8EDF2;--text2:#8AA5BE;--text3:#4D6B85;--border:rgba(46,123,196,0.2);--border2:rgba(46,123,196,0.4);--success:#2ECC8A;--danger:#E05555;--warning:#E0A830;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(46,123,196,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(46,123,196,0.04) 1px,transparent 1px);background-size:40px 40px;}
+.topbar{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(11,25,41,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;padding:0 24px;z-index:100;gap:16px;}
+.topbar-logo{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);}
+.topbar-logo-mark{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.topbar-logo-mark svg{width:16px;height:16px;}
+.topbar-sep{width:1px;height:24px;background:var(--border);}
+.topbar-modulo{font-size:13px;color:var(--text2);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.obra-chip{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--text2);}
+.obra-chip span{color:var(--text);font-weight:500;}
+.btn-voltar{padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:flex;align-items:center;gap:6px;}
+.btn-voltar:hover{border-color:var(--blue);color:var(--blue2);}
+.page{padding:80px 24px 40px;max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;}
+.page-subtitle{font-size:12px;color:var(--text3);margin-top:2px;}
+.btn-novo{padding:9px 18px;background:var(--blue);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+.btn-novo:hover{background:var(--blue2);}
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px;}
+.kanban-col{background:var(--navy2);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.kanban-col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.kanban-col-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text2);}
+.kanban-count{background:var(--navy3);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:11px;color:var(--text3);}
+.kanban-card{background:var(--navy3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;}
+.kanban-card:hover{border-color:var(--blue);transform:translateY(-1px);}
+.kanban-card-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;}
+.kanban-card-meta{font-size:11px;color:var(--text3);margin-bottom:8px;}
+.kanban-card-footer{display:flex;align-items:center;justify-content:space-between;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+.badge-pendente{background:rgba(224,168,48,0.12);color:var(--warning);border:1px solid rgba(224,168,48,0.25);}
+.badge-aprovado{background:rgba(46,204,138,0.12);color:var(--success);border:1px solid rgba(46,204,138,0.25);}
+.badge-reprovado{background:rgba(224,85,85,0.12);color:var(--danger);border:1px solid rgba(224,85,85,0.25);}
+.badge-maquinas{background:rgba(46,123,196,0.12);color:var(--blue2);border:1px solid rgba(46,123,196,0.25);}
+.badge-veiculos{background:rgba(46,204,138,0.12);color:var(--success);border:1px solid rgba(46,204,138,0.25);}
+.badge-equipamentos{background:rgba(224,168,48,0.12);color:var(--warning);border:1px solid rgba(224,168,48,0.25);}
+.form-card{background:var(--navy2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px;}
+.form-card h3{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:1px;color:var(--text);margin-bottom:18px;}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:7px;}
+.form-group label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);}
+.form-group input,.form-group select,.form-group textarea{background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;width:100%;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-glow);}
+.form-group input::placeholder,.form-group textarea::placeholder{color:var(--text3);}
+.form-group select option{background:var(--navy2);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-actions{display:flex;gap:10px;margin-top:4px;}
+.btn-salvar{padding:11px 24px;background:var(--blue);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.btn-salvar:hover{background:var(--blue2);}
+.btn-salvar:disabled{opacity:0.6;cursor:not-allowed;}
+.btn-cancelar{padding:11px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;transition:all 0.2s;}
+.btn-cancelar:hover{border-color:var(--text2);color:var(--text);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-overlay.aberto{display:flex;}
+.modal{background:var(--navy2);border:1px solid var(--border2);border-radius:14px;padding:28px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,0.5);}
+.modal h3{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:20px;}
+.modal-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.modal-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);}
+.modal-value{font-size:13px;font-weight:500;text-align:right;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.audit-info{font-size:11px;color:var(--text3);margin-top:16px;padding-top:16px;border-top:1px solid var(--border);line-height:1.8;}
+.btn-aprovar{padding:9px 18px;background:rgba(46,204,138,0.15);border:1px solid rgba(46,204,138,0.35);border-radius:8px;color:var(--success);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+.btn-aprovar:hover{background:rgba(46,204,138,0.25);}
+.btn-reprovar{padding:9px 18px;background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.3);border-radius:8px;color:var(--danger);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+.btn-reprovar:hover{background:rgba(224,85,85,0.2);}
+.empty-col{text-align:center;padding:32px;color:var(--text3);font-size:12px;}
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:10px;}
+.toast{background:var(--navy2);border:1px solid var(--border2);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,0.4);display:flex;align-items:center;gap:10px;min-width:280px;}
+.toast.sucesso{border-left:3px solid var(--success);}
+.toast.erro{border-left:3px solid var(--danger);}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.6s linear infinite;margin:48px auto;display:block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-logo" href="index.html">
+    <div class="topbar-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+    SAPIENS
+  </a>
+  <div class="topbar-sep"></div>
+  <div class="topbar-modulo">Solicitações de Contratos</div>
+  <div class="topbar-right">
+    <div class="obra-chip">Obra: <span id="obra-nome-display">—</span></div>
+    <a class="btn-voltar" href="index.html">← Portal</a>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Solicitações de Contratos</div>
+      <div class="page-subtitle">Fluxo: Solicitação → Aprovação → Elaboração</div>
+    </div>
+    <button class="btn-novo" onclick="abrirForm()">+ Nova solicitação</button>
+  </div>
+
+  <div class="form-card" id="form-card" style="display:none">
+    <h3 id="form-titulo">Nova solicitação</h3>
+    <input type="hidden" id="form-id"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tipo de contrato *</label>
+        <select id="f-tipo">
+          <option value="">Selecione...</option>
+          <option value="locacao_maquinas">Locação de Máquinas</option>
+          <option value="locacao_veiculos">Locação de Veículos</option>
+          <option value="locacao_equipamentos">Locação de Equipamentos</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fornecedor *</label>
+        <select id="f-fornecedor"><option value="">Carregando...</option></select>
+      </div>
+      <div class="form-group">
+        <label>Valor estimado (R$)</label>
+        <input type="number" id="f-valor" placeholder="0,00" step="0.01"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Data início prevista</label>
+        <input type="date" id="f-inicio"/>
+      </div>
+      <div class="form-group">
+        <label>Data fim prevista</label>
+        <input type="date" id="f-fim"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="grid-column:span 2">
+        <label>Justificativa / Objeto *</label>
+        <textarea id="f-objeto" placeholder="Descreva o objeto do contrato e a justificativa da solicitação..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancelar" onclick="fecharForm()">Cancelar</button>
+      <button class="btn-salvar" id="btn-salvar" onclick="salvar()">Enviar solicitação</button>
+    </div>
+  </div>
+
+  <div class="kanban" id="kanban"><div class="spinner"></div></div>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)fecharModal()">
+  <div class="modal">
+    <h3 id="modal-titulo">Solicitação</h3>
+    <div id="modal-body"></div>
+    <div class="audit-info" id="modal-audit"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+const SUPABASE_URL='https://yoslcgwpboggofeubtqk.supabase.co';
+const SUPABASE_KEY='sb_publishable_SslKwCxg51q9N_hZbbS6Uw_FcBOEhnU';
+const {createClient}=supabase;
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+let sessao=null,obraId=null,perfil=null,solicitacoes=[],solAtual=null;
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='index.html';return;}
+  sessao=session;
+  const params=new URLSearchParams(window.location.search);
+  obraId=params.get('obra');
+  if(obraId){
+    const {data:obra}=await sb.from('obras').select('nome').eq('id',obraId).single();
+    if(obra)document.getElementById('obra-nome-display').textContent=obra.nome;
+  }
+  const {data:usr}=await sb.from('usuarios').select('perfis(nome)').eq('id',sessao.user.id).single();
+  perfil=usr?.perfis?.nome||'operador';
+  await carregarFornecedoresSelect();
+  await carregar();
+});
+
+async function carregarFornecedoresSelect(){
+  const {data}=await sb.from('fornecedores').select('id,razao_social').eq('status','ativo').order('razao_social');
+  const sel=document.getElementById('f-fornecedor');
+  sel.innerHTML='<option value="">Selecione o fornecedor...</option>';
+  (data||[]).forEach(f=>sel.innerHTML+=`<option value="${f.id}">${f.razao_social}</option>`);
+}
+
+async function carregar(){
+  let q=sb.from('solicitacoes_contratos').select('*,fornecedores(razao_social),criado_por_usr:usuarios!solicitacoes_contratos_criado_por_fkey(nome)').order('criado_em',{ascending:false});
+  if(obraId)q=q.eq('obra_id',obraId);
+  const {data,error}=await q;
+  if(error){mostrarToast('Erro ao carregar solicitações.','erro');return;}
+  solicitacoes=data||[];
+  renderizarKanban();
+}
+
+function renderizarKanban(){
+  const pendentes=solicitacoes.filter(s=>s.status==='pendente');
+  const aprovadas=solicitacoes.filter(s=>s.status==='aprovado');
+  const reprovadas=solicitacoes.filter(s=>s.status==='reprovado');
+  document.getElementById('kanban').innerHTML=`
+    ${coluna('Aguardando aprovação','pendente',pendentes,'badge-pendente')}
+    ${coluna('Aprovadas','aprovado',aprovadas,'badge-aprovado')}
+    ${coluna('Reprovadas','reprovado',reprovadas,'badge-reprovado')}
+  `;
+}
+
+function coluna(titulo,status,lista,badgeClass){
+  return `<div class="kanban-col">
+    <div class="kanban-col-header">
+      <span class="kanban-col-title">${titulo}</span>
+      <span class="kanban-count">${lista.length}</span>
+    </div>
+    ${lista.length?lista.map(s=>`
+      <div class="kanban-card" onclick="abrirDetalhe('${s.id}')">
+        <div class="kanban-card-title">${s.fornecedores?.razao_social||'—'}</div>
+        <div class="kanban-card-meta">${tipoLabel(s.tipo)} • ${s.data_inicio?formatarData(s.data_inicio):'-'}</div>
+        <div class="kanban-card-footer">
+          <span class="badge ${badgeClass}">${s.status}</span>
+          ${s.valor_estimado?`<span style="font-size:12px;color:var(--text2)">R$ ${Number(s.valor_estimado).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
+        </div>
+      </div>`).join(''):`<div class="empty-col">Nenhuma solicitação</div>`}
+  </div>`;
+}
+
+function tipoLabel(t){return{locacao_maquinas:'Locação Máquinas',locacao_veiculos:'Locação Veículos',locacao_equipamentos:'Locação Equipamentos'}[t]||t;}
+
+function abrirDetalhe(id){
+  solAtual=solicitacoes.find(s=>s.id===id);
+  if(!solAtual)return;
+  const s=solAtual;
+  document.getElementById('modal-titulo').textContent=`Solicitação — ${tipoLabel(s.tipo)}`;
+  const campos=[['Fornecedor',s.fornecedores?.razao_social],['Tipo',tipoLabel(s.tipo)],['Status',s.status],['Valor estimado',s.valor_estimado?`R$ ${Number(s.valor_estimado).toLocaleString('pt-BR',{minimumFractionDigits:2})}`:'—'],['Início previsto',s.data_inicio?formatarData(s.data_inicio):'—'],['Fim previsto',s.data_fim?formatarData(s.data_fim):'—'],['Objeto/Justificativa',s.objeto]];
+  document.getElementById('modal-body').innerHTML=campos.filter(([,v])=>v).map(([l,v])=>`<div class="modal-row"><span class="modal-label">${l}</span><span class="modal-value">${v}</span></div>`).join('');
+  document.getElementById('modal-audit').innerHTML=`Solicitado por <strong>${s.criado_por_usr?.nome||'—'}</strong> em ${formatarData(s.criado_em)}`;
+  const actions=document.getElementById('modal-actions');
+  actions.innerHTML='<button class="btn-cancelar" onclick="fecharModal()">Fechar</button>';
+  if(perfil==='admin'&&s.status==='pendente'){
+    actions.innerHTML+=`<button class="btn-reprovar" onclick="mudarStatus('${s.id}','reprovado')">Reprovar</button>`;
+    actions.innerHTML+=`<button class="btn-aprovar" onclick="mudarStatus('${s.id}','aprovado')">Aprovar</button>`;
+  }
+  document.getElementById('modal').classList.add('aberto');
+}
+
+async function mudarStatus(id,novoStatus){
+  const {error}=await sb.from('solicitacoes_contratos').update({status:novoStatus,editado_por:sessao.user.id}).eq('id',id);
+  if(error){mostrarToast('Erro ao atualizar status.','erro');return;}
+  mostrarToast(`Solicitação ${novoStatus}!`,'sucesso');
+  fecharModal();
+  await carregar();
+}
+
+function abrirForm(){
+  document.getElementById('form-id').value='';
+  document.getElementById('f-tipo').value='';
+  document.getElementById('f-fornecedor').value='';
+  document.getElementById('f-valor').value='';
+  document.getElementById('f-inicio').value='';
+  document.getElementById('f-fim').value='';
+  document.getElementById('f-objeto').value='';
+  document.getElementById('form-card').style.display='block';
+  document.getElementById('form-card').scrollIntoView({behavior:'smooth'});
+}
+
+function fecharForm(){document.getElementById('form-card').style.display='none';}
+function fecharModal(){document.getElementById('modal').classList.remove('aberto');}
+
+async function salvar(){
+  const tipo=document.getElementById('f-tipo').value;
+  const fornecedor=document.getElementById('f-fornecedor').value;
+  const objeto=document.getElementById('f-objeto').value.trim();
+  if(!tipo||!fornecedor||!objeto){mostrarToast('Preencha tipo, fornecedor e objeto.','erro');return;}
+  const btn=document.getElementById('btn-salvar');
+  btn.disabled=true;btn.textContent='Enviando...';
+  const {error}=await sb.from('solicitacoes_contratos').insert({
+    tipo,fornecedor_id:fornecedor,obra_id:obraId,
+    valor_estimado:document.getElementById('f-valor').value||null,
+    data_inicio:document.getElementById('f-inicio').value||null,
+    data_fim:document.getElementById('f-fim').value||null,
+    objeto,status:'pendente',criado_por:sessao.user.id
+  });
+  btn.disabled=false;btn.textContent='Enviar solicitação';
+  if(error){mostrarToast('Erro: '+error.message,'erro');return;}
+  mostrarToast('Solicitação enviada para aprovação!','sucesso');
+  fecharForm();
+  await carregar();
+}
+
+function formatarData(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('pt-BR');}
+function mostrarToast(msg,tipo='sucesso'){const c=document.getElementById('toast-container');const t=document.createElement('div');t.className=`toast ${tipo}`;t.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${tipo==='sucesso'?'#2ECC8A':'#E05555'}" stroke-width="2">${tipo==='sucesso'?'<polyline points="20 6 9 17 4 12"/>':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>'}</svg>${msg}`;c.appendChild(t);setTimeout(()=>t.remove(),4000);}
+</script>
+</body>
+</html>
