@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAPIENS — Fornecedores</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --navy: #0B1929; --navy2: #112236; --navy3: #1A3352;
+    --blue: #2E7BC4; --blue2: #3E8FD8; --blue-glow: rgba(46,123,196,0.25);
+    --text: #E8EDF2; --text2: #8AA5BE; --text3: #4D6B85;
+    --border: rgba(46,123,196,0.2); --border2: rgba(46,123,196,0.4);
+    --success: #2ECC8A; --danger: #E05555; --warning: #E0A830;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: var(--navy); color: var(--text); min-height: 100vh; }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: linear-gradient(rgba(46,123,196,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(46,123,196,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 60px;
+    background: rgba(11,25,41,0.95); border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px); display: flex; align-items: center;
+    padding: 0 24px; z-index: 100; gap: 16px;
+  }
+  .topbar-logo { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 3px; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+  .topbar-logo-mark { width: 30px; height: 30px; background: var(--blue); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+  .topbar-logo-mark svg { width: 16px; height: 16px; }
+  .topbar-sep { width: 1px; height: 24px; background: var(--border); }
+  .topbar-modulo { font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+  .topbar-modulo svg { width: 14px; height: 14px; stroke: var(--blue2); fill: none; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .obra-chip { background: var(--navy2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; font-size: 12px; color: var(--text2); }
+  .obra-chip span { color: var(--text); font-weight: 500; }
+  .btn-voltar { padding: 6px 14px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); font-size: 12px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+  .btn-voltar:hover { border-color: var(--blue); color: var(--blue2); }
+
+  /* LAYOUT */
+  .page { padding: 80px 24px 40px; max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; color: var(--text); }
+  .page-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* BUSCA */
+  .search-bar { position: relative; margin-bottom: 20px; }
+  .search-bar input { width: 100%; background: var(--navy2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px 12px 42px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .search-bar input:focus { border-color: var(--blue); }
+  .search-bar svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--text3); fill: none; }
+
+  /* TABELA */
+  .table-wrap { background: var(--navy2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-header h3 { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); }
+  .table-count { font-size: 12px; color: var(--text3); }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.15); }
+  tbody td { padding: 13px 16px; font-size: 13px; color: var(--text); border-bottom: 1px solid rgba(46,123,196,0.07); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(46,123,196,0.04); }
+  .td-secondary { color: var(--text2) !important; font-size: 12px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-ativo { background: rgba(46,204,138,0.12); color: var(--success); border: 1px solid rgba(46,204,138,0.25); }
+  .badge-inativo { background: rgba(77,107,133,0.2); color: var(--text3); border: 1px solid var(--border); }
+  .btn-icon { background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text2); cursor: pointer; transition: all 0.2s; font-size: 12px; margin-right: 4px; }
+  .btn-icon:hover { border-color: var(--blue); color: var(--blue2); }
+  .btn-icon.danger:hover { border-color: var(--danger); color: #ff8080; }
+  .empty-state { text-align: center; padding: 48px; color: var(--text3); font-size: 14px; }
+
+  /* FORMULÁRIO */
+  .form-card { background: var(--navy2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .form-card h3 { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 1px; color: var(--text); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 7px; }
+  .form-group label { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text2); }
+  .form-group input, .form-group select {
+    background: var(--navy); border: 1px solid var(--border); border-radius: 8px;
+    padding: 11px 14px; color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color 0.2s; width: 100%;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+  .form-group input::placeholder { color: var(--text3); }
+  .form-group select option { background: var(--navy2); }
+  .form-group select:disabled { opacity: 0.5; }
+  .form-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .btn-salvar { padding: 11px 24px; background: var(--blue); border: none; border-radius: 8px; color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+  .btn-salvar:hover { background: var(--blue2); box-shadow: 0 0 16px var(--blue-glow); }
+  .btn-salvar:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-cancelar { padding: 11px 20px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn-cancelar:hover { border-color: var(--text2); color: var(--text); }
+  .btn-novo { padding: 9px 18px; background: var(--blue); border: none; border-radius: 8px; color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+  .btn-novo:hover { background: var(--blue2); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.aberto { display: flex; }
+  .modal { background: var(--navy2); border: 1px solid var(--border2); border-radius: 14px; padding: 28px; width: 640px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,0.5); animation: fadeUp 0.2s ease; }
+  .modal h3 { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .audit-info { font-size: 11px; color: var(--text3); margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); line-height: 1.8; }
+
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 10px; }
+  .toast { background: var(--navy2); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: var(--text); box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 10px; min-width: 280px; }
+  .toast.sucesso { border-left: 3px solid var(--success); }
+  .toast.erro { border-left: 3px solid var(--danger); }
+
+  /* LOADING */
+  .loading { display: flex; align-items: center; justify-content: center; padding: 48px; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.6s linear infinite; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .fade-in { animation: fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="topbar-logo" href="index.html">
+    <div class="topbar-logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+      </svg>
+    </div>
+    SAPIENS
+  </a>
+  <div class="topbar-sep"></div>
+  <div class="topbar-modulo">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    Cadastro de Fornecedores
+  </div>
+  <div class="topbar-right">
+    <div class="obra-chip">Obra: <span id="obra-nome-display">—</span></div>
+    <a class="btn-voltar" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Portal
+    </a>
+  </div>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Fornecedores</div>
+      <div class="page-subtitle">Cadastro e gestão de fornecedores</div>
+    </div>
+    <button class="btn-novo" onclick="abrirFormNovo()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo fornecedor
+    </button>
+  </div>
+
+  <!-- FORMULÁRIO NOVO/EDITAR -->
+  <div class="form-card" id="form-card" style="display:none">
+    <h3 id="form-titulo">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Novo fornecedor
+    </h3>
+    <input type="hidden" id="form-id"/>
+    <div class="form-row">
+      <div class="form-group" style="grid-column: span 2">
+        <label>Razão social *</label>
+        <input type="text" id="f-razao" placeholder="Nome empresarial completo"/>
+      </div>
+      <div class="form-group">
+        <label>Nome fantasia</label>
+        <input type="text" id="f-fantasia" placeholder="Nome comercial"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>CNPJ</label>
+        <input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" maxlength="18" oninput="mascararCnpj(this)"/>
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="f-email" placeholder="contato@empresa.com"/>
+      </div>
+      <div class="form-group">
+        <label>Telefone</label>
+        <input type="text" id="f-telefone" placeholder="(84) 99999-9999" maxlength="15" oninput="mascararTelefone(this)"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="grid-column: span 2">
+        <label>Endereço</label>
+        <input type="text" id="f-endereco" placeholder="Rua, número, complemento"/>
+      </div>
+      <div class="form-group">
+        <label>Estado</label>
+        <select id="f-estado" onchange="carregarCidades('f-estado','f-cidade')">
+          <option value="">Selecione...</option>
+          <option value="AC">AC – Acre</option><option value="AL">AL – Alagoas</option>
+          <option value="AP">AP – Amapá</option><option value="AM">AM – Amazonas</option>
+          <option value="BA">BA – Bahia</option><option value="CE">CE – Ceará</option>
+          <option value="DF">DF – Distrito Federal</option><option value="ES">ES – Espírito Santo</option>
+          <option value="GO">GO – Goiás</option><option value="MA">MA – Maranhão</option>
+          <option value="MT">MT – Mato Grosso</option><option value="MS">MS – Mato Grosso do Sul</option>
+          <option value="MG">MG – Minas Gerais</option><option value="PA">PA – Pará</option>
+          <option value="PB">PB – Paraíba</option><option value="PR">PR – Paraná</option>
+          <option value="PE">PE – Pernambuco</option><option value="PI">PI – Piauí</option>
+          <option value="RJ">RJ – Rio de Janeiro</option><option value="RN">RN – Rio Grande do Norte</option>
+          <option value="RS">RS – Rio Grande do Sul</option><option value="RO">RO – Rondônia</option>
+          <option value="RR">RR – Roraima</option><option value="SC">SC – Santa Catarina</option>
+          <option value="SP">SP – São Paulo</option><option value="SE">SE – Sergipe</option>
+          <option value="TO">TO – Tocantins</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Cidade</label>
+        <select id="f-cidade" disabled>
+          <option value="">Selecione o estado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>CEP</label>
+        <input type="text" id="f-cep" placeholder="00000-000" maxlength="9" oninput="mascararCep(this)"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="f-status">
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancelar" onclick="fecharForm()">Cancelar</button>
+      <button class="btn-salvar" id="btn-salvar-form" onclick="salvarFornecedor()">Salvar</button>
+    </div>
+  </div>
+
+  <!-- BUSCA -->
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="busca" placeholder="Buscar por razão social, CNPJ ou cidade..." oninput="filtrarTabela()"/>
+  </div>
+
+  <!-- TABELA -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <h3>Fornecedores cadastrados</h3>
+      <span class="table-count" id="table-count"></span>
+    </div>
+    <div id="tabela-wrap">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHES -->
+<div class="modal-overlay" id="modal-detalhes">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="modal-nome">Fornecedor</h3>
+    <div id="modal-body"></div>
+    <div class="audit-info" id="modal-audit"></div>
+    <div class="modal-actions">
+      <button class="btn-cancelar" onclick="fecharModalDetalhes()">Fechar</button>
+      <button class="btn-salvar" id="modal-btn-editar">Editar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+const SUPABASE_URL = 'https://yoslcgwpboggofeubtqk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_SslKwCxg51q9N_hZbbS6Uw_FcBOEhnU';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let sessao = null;
+let obraId = null;
+let fornecedores = [];
+let fornecedorEditando = null;
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  sessao = session;
+
+  const params = new URLSearchParams(window.location.search);
+  obraId = params.get('obra');
+
+  if (obraId) {
+    const { data: obra } = await sb.from('obras').select('nome').eq('id', obraId).single();
+    if (obra) document.getElementById('obra-nome-display').textContent = obra.nome;
+  }
+
+  await carregarFornecedores();
+});
+
+// ══════════════════════════════════════════
+// CARREGAR
+// ══════════════════════════════════════════
+async function carregarFornecedores() {
+  const { data, error } = await sb.from('fornecedores')
+    .select('*, criado_por_usr:usuarios!fornecedores_criado_por_fkey(nome), editado_por_usr:usuarios!fornecedores_editado_por_fkey(nome)')
+    .order('razao_social');
+
+  if (error) {
+    mostrarToast('Erro ao carregar fornecedores.', 'erro');
+    return;
+  }
+
+  fornecedores = data || [];
+  renderizarTabela(fornecedores);
+}
+
+function renderizarTabela(lista) {
+  const wrap = document.getElementById('tabela-wrap');
+  document.getElementById('table-count').textContent = `${lista.length} registro${lista.length !== 1 ? 's' : ''}`;
+
+  if (!lista.length) {
+    wrap.innerHTML = '<div class="empty-state">Nenhum fornecedor encontrado.</div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Razão social</th>
+          <th>CNPJ</th>
+          <th>Cidade / Estado</th>
+          <th>Telefone</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map(f => `
+          <tr class="fade-in">
+            <td>
+              <div style="font-weight:500">${f.razao_social}</div>
+              ${f.nome_fantasia ? `<div style="font-size:11px;color:var(--text3)">${f.nome_fantasia}</div>` : ''}
+            </td>
+            <td class="td-secondary">${f.cnpj || '—'}</td>
+            <td class="td-secondary">${[f.cidade, f.estado].filter(Boolean).join(' / ') || '—'}</td>
+            <td class="td-secondary">${f.telefone || '—'}</td>
+            <td><span class="badge badge-${f.status === 'ativo' ? 'ativo' : 'inativo'}">${f.status}</span></td>
+            <td>
+              <button class="btn-icon" onclick="abrirDetalhes('${f.id}')">Ver</button>
+              <button class="btn-icon" onclick="abrirFormEditar('${f.id}')">Editar</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ══════════════════════════════════════════
+// FORMULÁRIO
+// ══════════════════════════════════════════
+function abrirFormNovo() {
+  fornecedorEditando = null;
+  limparForm();
+  document.getElementById('form-titulo').innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    Novo fornecedor`;
+  document.getElementById('btn-salvar-form').textContent = 'Salvar';
+  document.getElementById('form-card').style.display = 'block';
+  document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function abrirFormEditar(id) {
+  const f = fornecedores.find(x => x.id === id);
+  if (!f) return;
+  fornecedorEditando = f;
+
+  document.getElementById('form-id').value   = f.id;
+  document.getElementById('f-razao').value   = f.razao_social || '';
+  document.getElementById('f-fantasia').value = f.nome_fantasia || '';
+  document.getElementById('f-cnpj').value    = f.cnpj || '';
+  document.getElementById('f-email').value   = f.email || '';
+  document.getElementById('f-telefone').value = f.telefone || '';
+  document.getElementById('f-endereco').value = f.endereco || '';
+  document.getElementById('f-cep').value     = f.cep || '';
+  document.getElementById('f-status').value  = f.status || 'ativo';
+
+  const selEstado = document.getElementById('f-estado');
+  selEstado.value = f.estado || '';
+  if (f.estado) await carregarCidades('f-estado', 'f-cidade', f.cidade || '');
+
+  document.getElementById('form-titulo').innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue2)" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Editar fornecedor`;
+  document.getElementById('btn-salvar-form').textContent = 'Salvar alterações';
+  document.getElementById('form-card').style.display = 'block';
+  document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+  fecharModalDetalhes();
+}
+
+function fecharForm() {
+  document.getElementById('form-card').style.display = 'none';
+  limparForm();
+  fornecedorEditando = null;
+}
+
+function limparForm() {
+  ['form-id','f-razao','f-fantasia','f-cnpj','f-email','f-telefone','f-endereco','f-cep'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-estado').value = '';
+  document.getElementById('f-cidade').innerHTML = '<option value="">Selecione o estado</option>';
+  document.getElementById('f-cidade').disabled = true;
+  document.getElementById('f-status').value = 'ativo';
+}
+
+async function salvarFornecedor() {
+  const razao  = document.getElementById('f-razao').value.trim();
+  if (!razao) { mostrarToast('Informe a razão social.', 'erro'); return; }
+
+  const dados = {
+    razao_social:  razao,
+    nome_fantasia: document.getElementById('f-fantasia').value.trim() || null,
+    cnpj:          document.getElementById('f-cnpj').value.trim() || null,
+    email:         document.getElementById('f-email').value.trim() || null,
+    telefone:      document.getElementById('f-telefone').value.trim() || null,
+    endereco:      document.getElementById('f-endereco').value.trim() || null,
+    estado:        document.getElementById('f-estado').value || null,
+    cidade:        document.getElementById('f-cidade').value || null,
+    cep:           document.getElementById('f-cep').value.trim() || null,
+    status:        document.getElementById('f-status').value,
+  };
+
+  const btn = document.getElementById('btn-salvar-form');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  let error;
+  if (fornecedorEditando) {
+    ({ error } = await sb.from('fornecedores').update({
+      ...dados, editado_por: sessao.user.id
+    }).eq('id', fornecedorEditando.id));
+  } else {
+    ({ error } = await sb.from('fornecedores').insert({
+      ...dados, criado_por: sessao.user.id
+    }));
+  }
+
+  btn.disabled = false;
+  btn.textContent = fornecedorEditando ? 'Salvar alterações' : 'Salvar';
+
+  if (error) { mostrarToast('Erro ao salvar: ' + error.message, 'erro'); return; }
+
+  mostrarToast(fornecedorEditando ? 'Fornecedor atualizado!' : 'Fornecedor cadastrado!', 'sucesso');
+  fecharForm();
+  await carregarFornecedores();
+}
+
+// ══════════════════════════════════════════
+// DETALHES
+// ══════════════════════════════════════════
+function abrirDetalhes(id) {
+  const f = fornecedores.find(x => x.id === id);
+  if (!f) return;
+
+  document.getElementById('modal-nome').textContent = f.razao_social;
+  document.getElementById('modal-btn-editar').onclick = () => abrirFormEditar(id);
+
+  const campos = [
+    ['Nome fantasia', f.nome_fantasia],
+    ['CNPJ', f.cnpj],
+    ['E-mail', f.email],
+    ['Telefone', f.telefone],
+    ['Endereço', f.endereco],
+    ['Cidade', f.cidade],
+    ['Estado', f.estado],
+    ['CEP', f.cep],
+    ['Status', f.status],
+  ];
+
+  document.getElementById('modal-body').innerHTML = campos
+    .filter(([, v]) => v)
+    .map(([l, v]) => `
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">${l}</span>
+        <span style="font-size:13px;font-weight:500">${v}</span>
+      </div>
+    `).join('');
+
+  const criadoPor = f.criado_por_usr?.nome || '—';
+  const editadoPor = f.editado_por_usr?.nome;
+  document.getElementById('modal-audit').innerHTML = `
+    Criado por <strong>${criadoPor}</strong> em ${formatarData(f.criado_em)}
+    ${editadoPor ? `<br>Última edição por <strong>${editadoPor}</strong> em ${formatarData(f.editado_em)}` : ''}
+  `;
+
+  document.getElementById('modal-detalhes').classList.add('aberto');
+}
+
+function fecharModalDetalhes() {
+  document.getElementById('modal-detalhes').classList.remove('aberto');
+}
+
+document.getElementById('modal-detalhes').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalDetalhes();
+});
+
+// ══════════════════════════════════════════
+// FILTRO
+// ══════════════════════════════════════════
+function filtrarTabela() {
+  const q = document.getElementById('busca').value.toLowerCase();
+  const filtrados = fornecedores.filter(f =>
+    (f.razao_social || '').toLowerCase().includes(q) ||
+    (f.cnpj || '').toLowerCase().includes(q) ||
+    (f.cidade || '').toLowerCase().includes(q) ||
+    (f.nome_fantasia || '').toLowerCase().includes(q)
+  );
+  renderizarTabela(filtrados);
+}
+
+// ══════════════════════════════════════════
+// IBGE
+// ══════════════════════════════════════════
+async function carregarCidades(selEstadoId, selCidadeId, cidadeAtual = '') {
+  const uf  = document.getElementById(selEstadoId).value;
+  const sel = document.getElementById(selCidadeId);
+  sel.innerHTML = '<option value="">Carregando...</option>';
+  sel.disabled = true;
+  if (!uf) { sel.innerHTML = '<option value="">Selecione o estado</option>'; return; }
+  try {
+    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+    const cidades = await r.json();
+    sel.innerHTML = '<option value="">Selecione a cidade</option>';
+    cidades.forEach(c => {
+      const o = document.createElement('option');
+      o.value = o.textContent = c.nome;
+      if (c.nome === cidadeAtual) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+  } catch {
+    sel.innerHTML = '<option value="">Erro ao carregar</option>';
+  }
+}
+
+// ══════════════════════════════════════════
+// MÁSCARAS
+// ══════════════════════════════════════════
+function mascararCnpj(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 14);
+  if (v.length > 12) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+  else if (v.length > 8) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d+)$/, '$1.$2.$3/$4');
+  else if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d+)$/, '$1.$2.$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d+)$/, '$1.$2');
+  el.value = v;
+}
+
+function mascararTelefone(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+  else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4})(\d+)$/, '($1) $2-$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d+)$/, '($1) $2');
+  el.value = v;
+}
+
+function mascararCep(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5);
+  el.value = v;
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function formatarData(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function mostrarToast(msg, tipo = 'sucesso') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${tipo}`;
+  toast.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${tipo === 'sucesso' ? '#2ECC8A' : '#E05555'}" stroke-width="2">
+      ${tipo === 'sucesso' ? '<polyline points="20 6 9 17 4 12"/>' : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
+    </svg>
+    ${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+</script>
+</body>
+</html>
